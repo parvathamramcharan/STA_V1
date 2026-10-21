@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "flag-icons/css/flag-icons.min.css";
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --border: 214 32% 91%;
+    --nav: 0 0% 100%;
+    --primary: 221 83% 53%;
+  }
+
+  [data-theme="dark"] {
+    --background: 222 47% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --nav: 222 47% 7%;
+    --primary: 217 91% 60%;
+  }
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+#login-username:-webkit-autofill,
+#login-password:-webkit-autofill {
+  -webkit-text-fill-color: hsl(var(--foreground));
+  font-weight: 700;
+}
+
+.bg-card {
+  background-color: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+.text-card-foreground {
+  color: hsl(var(--card-foreground));
+}
+
+.border-theme {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+[data-theme="dark"] .border-theme {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.divide-theme > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="dark"] .divide-theme > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.bg-nav {
+  background-color: hsl(var(--nav));
+  border-color: hsl(var(--border));
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.5);
+}
+
+/* Global cursor pointer rules */
+button,
+a,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+select,
+summary,
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+/* Global disabled/not-allowed cursor rules */
+button:disabled,
+button[disabled],
+input:disabled,
+.cursor-not-allowed {
+  cursor: not-allowed !important;
+}

@@ -1,0 +1,30 @@
+# Virtualenv (large, host-specific — never belongs in the image)
+myenv/
+
+# Python caches / bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Large data assets (mmdb geo databases, pcaps, image tarballs)
+*.mmdb
+*.pcap
+*.pcapng
+*.tar
+
+# Local env / secrets (provide via runtime env vars instead)
+.env
+*.env
+
+# Compose / orchestration files (not needed inside the image)
+docker-compose*.yml
+
+# Editor / OS cruft
+.vscode/
+.idea/
+.DS_Store
+
+# VCS
+.git/
+.gitignore

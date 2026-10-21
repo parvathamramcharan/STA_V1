@@ -1,0 +1,10 @@
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.34,<1.0
+python-multipart>=0.0.20
+elasticsearch==8.13.0
+python-dotenv==1.1.1
+boto3==1.34.0
+requests==2.34.2
+fpdf2==2.7.9
+celery==5.3.6
+redis==5.0.1

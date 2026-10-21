@@ -1,0 +1,13 @@
+# Virtualenv
+myenv/
+
+# Python bytecode caches
+__pycache__/
+
+# Local env / secrets
+.env
+
+# Persistent JWT revocation store
+token_revocations.sqlite3
+token_revocations.sqlite3-shm
+token_revocations.sqlite3-wal
