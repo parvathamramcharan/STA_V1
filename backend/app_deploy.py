@@ -746,6 +746,18 @@ def get_dns_requests(request: Request, current_user: dict = Depends(require_role
         return api_response(data=[], success=False, error=str(e), status_code=500)
 
 
+@app.get('/api/pcaps/{sinkhole_id}/dns-sinkhole/summary')
+def get_dns_sinkhole_summary(
+    sinkhole_id: int,
+    current_user: dict = Depends(require_role('admin', 'user')),
+):
+    """Return DNS-sinkhole totals for the requested sinkhole set."""
+    try:
+        return api_response(data=elastic.get_dns_sinkhole_summary(sinkhole_id))
+    except Exception as e:
+        return api_response(data=None, success=False, error=str(e), status_code=500)
+
+
 # ============= FILES =============
 @app.get('/api/pcap/{pcap_id}/files')
 

@@ -28,6 +28,59 @@ DNS_REQUESTS_INDEX = "dns-requests"    # Per-URL requests with connected client 
 MAP_COUNTRY_CACHE_INDEX = "map-country-cache"  # Materialized view: per-country IP/packet/capture counts
 GEO_BREAKDOWN_CACHE_INDEX = "geo-breakdown-cache"  # Materialized view: country/city/isp packets+connections
 
+_COUNTRY_ALIASES = {
+    "in": "India",
+    "ind": "India",
+    "republic of india": "India",
+    "us": "United States",
+    "usa": "United States",
+    "united states of america": "United States",
+    "america": "United States",
+    "gb": "United Kingdom",
+    "uk": "United Kingdom",
+    "united kingdom of great britain and northern ireland": "United Kingdom",
+    "great britain": "United Kingdom",
+    "britain": "United Kingdom",
+    "england": "United Kingdom",
+    "scotland": "United Kingdom",
+    "wales": "United Kingdom",
+    "northern ireland": "United Kingdom",
+    "cn": "China",
+    "people's republic of china": "China",
+    "ru": "Russia",
+    "russian federation": "Russia",
+    "kr": "South Korea",
+    "korea, republic of": "South Korea",
+    "vn": "Vietnam",
+    "socialist republic of viet nam": "Vietnam",
+    "tr": "Turkey",
+    "republic of turkiye": "Turkey",
+    "republic of türkiye": "Turkey",
+    "tw": "Taiwan",
+    "taiwan, province of china": "Taiwan",
+    "ir": "Iran",
+    "islamic republic of iran": "Iran",
+    "sy": "Syria",
+    "syrian arab republic": "Syria",
+    "bo": "Bolivia",
+    "plurinational state of bolivia": "Bolivia",
+    "tz": "Tanzania",
+    "united republic of tanzania": "Tanzania",
+    "md": "Moldova",
+    "republic of moldova": "Moldova",
+    "cz": "Czech Republic",
+    "czechia": "Czech Republic",
+    "mk": "North Macedonia",
+    "republic of north macedonia": "North Macedonia",
+    "ci": "Cote d'Ivoire",
+    "cote d'ivoire": "Cote d'Ivoire",
+    "côte d'ivoire": "Cote d'Ivoire",
+    "cd": "Democratic Republic of the Congo",
+    "congo, the democratic republic of the": "Democratic Republic of the Congo",
+    "cg": "Republic of the Congo",
+    "republic of the congo": "Republic of the Congo",
+}
+
 SCRIPTED_METRIC_INIT_SCRIPT = "state.map = [:]"
 SCRIPTED_METRIC_COMBINE_SCRIPT = "return state.map"
 SCRIPTED_METRIC_REDUCE_SCRIPT = (
@@ -1507,6 +1560,205 @@ def get_dns_requests(pcap_id=None, page=1, per_page=50, search=""):
     return {"requests": page_slice, "total": total, "page": page, "per_page": per_page, "total_pages": total_pages}
 
 
+def get_dns_sinkhole_summary(sinkhole_id):
+    """Return DNS request totals and top domain, country, and ISP stats."""
+    es = get_es()
+    if not es:
+        raise RuntimeError("Elasticsearch is unavailable")
+
+    pcap_count = int(es.count(
+        index=PCAP_METADATA_INDEX,
+        body={"query": {"term": {"sinkhole_id": sinkhole_id}}},
+    ).get("count", 0))
+    pcap_ids = get_pcap_ids_for_sinkhole(sinkhole_id, es)
+    if pcap_count and not pcap_ids:
+        raise RuntimeError(f"Could not retrieve PCAP IDs for sinkhole set {sinkhole_id}")
+
+    summary = {
+        "domain_count": 0,
+        "pcap_count": pcap_count,
+        "request_count": 0,
+        "external_ip_count": 0,
+        "internal_ip_count": 0,
+        "top_active_domains": [],
+        "top_countries": [],
+        "top_isps": [],
+    }
+    if not pcap_ids:
+        return summary
+
+    def iter_source_docs(index, source_fields, query):
+        response = es.search(
+            index=index,
+            body={"query": query, "_source": source_fields, "size": 500},
+            scroll="2m",
+        )
+        scroll_id = response.get("_scroll_id")
+        try:
+            hits = response.get("hits", {}).get("hits", [])
+            while hits:
+                for hit in hits:
+                    yield hit.get("_source", {})
+                response = es.scroll(scroll_id=scroll_id, scroll="2m")
+                scroll_id = response.get("_scroll_id", scroll_id)
+                hits = response.get("hits", {}).get("hits", [])
+        finally:
+            if scroll_id:
+                es.clear_scroll(scroll_id=scroll_id)
+
+    pcap_query = {"terms": {"pcap_id": pcap_ids}}
+    ip_metadata_by_pcap_ip = {}
+    external_ips = set()
+    internal_ips = set()
+    for source in iter_source_docs(
+        PCAP_IPS_INDEX,
+        [
+            "pcap_id",
+            "external_ips.ip",
+            "external_ips.country",
+            "external_ips.latitude",
+            "external_ips.longitude",
+            "internal_ips.ip",
+            "internal_ips.country",
+            "internal_ips.latitude",
+            "internal_ips.longitude",
+        ],
+        pcap_query,
+    ):
+        pcap_id = source.get("pcap_id")
+        for field, ip_set in (
+            ("external_ips", external_ips),
+            ("internal_ips", internal_ips),
+        ):
+            for item in source.get(field) or []:
+                ip = item.get("ip")
+                if not ip:
+                    continue
+                ip_set.add(ip)
+                if pcap_id:
+                    country = item.get("country")
+                    if country:
+                        country = str(country).strip()
+                        country = _COUNTRY_ALIASES.get(
+                            country.casefold(),
+                            country.upper() if len(country) == 2 else country,
+                        )
+                    ip_metadata_by_pcap_ip[(pcap_id, ip)] = {
+                        "country": country,
+                        "latitude": item.get("latitude"),
+                        "longitude": item.get("longitude"),
+                    }
+
+    summary["external_ip_count"] = len(external_ips)
+    summary["internal_ip_count"] = len(internal_ips)
+
+    domain_requests = {}
+    domains = set()
+    country_domains = {}
+    isp_ips = {}
+    isp_requests = {}
+    dns_query = {
+        "bool": {
+            "filter": [pcap_query],
+            "must_not": [{"regexp": {"host": "[0-9]{1,3}(\\.[0-9]{1,3}){3}"}}],
+        }
+    }
+    for source in iter_source_docs(
+        DNS_REQUESTS_INDEX,
+        ["pcap_id", "host", "request_count", "connected_ips"],
+        dns_query,
+    ):
+        host = source.get("host")
+        if not host:
+            continue
+        request_count = int(source.get("request_count", 0) or 0)
+        domains.add(host)
+        domain_requests[host] = domain_requests.get(host, 0) + request_count
+        summary["request_count"] += request_count
+
+        pcap_id = source.get("pcap_id")
+        record_isps = set()
+        for connected_ip in source.get("connected_ips") or []:
+            ip = connected_ip.get("ip")
+            isp = connected_ip.get("isp")
+            if ip and isp:
+                metadata = ip_metadata_by_pcap_ip.get((pcap_id, ip), {})
+                country = metadata.get("country") or connected_ip.get("country")
+                if country:
+                    country = str(country).strip()
+                    country = _COUNTRY_ALIASES.get(
+                        country.casefold(),
+                        country.upper() if len(country) == 2 else country,
+                    )
+                ip_details = isp_ips.setdefault(isp, {}).setdefault(
+                    ip,
+                    {
+                        "ip": ip,
+                        "latitude": None,
+                        "longitude": None,
+                        "country": None,
+                    },
+                )
+                for field in ("latitude", "longitude"):
+                    if ip_details[field] is None:
+                        ip_details[field] = (
+                            metadata.get(field)
+                            if metadata.get(field) is not None
+                            else connected_ip.get(field)
+                        )
+                if ip_details["country"] is None:
+                    ip_details["country"] = country
+                record_isps.add(isp)
+            else:
+                metadata = ip_metadata_by_pcap_ip.get((pcap_id, ip), {})
+            country = metadata.get("country") or connected_ip.get("country")
+            if country:
+                country = str(country).strip()
+                country = _COUNTRY_ALIASES.get(
+                    country.casefold(),
+                    country.upper() if len(country) == 2 else country,
+                )
+                country_domains.setdefault(country, set()).add(host)
+
+        for isp in record_isps:
+            isp_requests[isp] = isp_requests.get(isp, 0) + request_count
+
+    summary["domain_count"] = len(domains)
+    summary["top_active_domains"] = [
+        {"host": host, "request_count": request_count}
+        for host, request_count in sorted(
+            domain_requests.items(), key=lambda item: (-item[1], item[0])
+        )[:10]
+    ]
+    summary["top_countries"] = [
+        {
+            "country": country,
+            "domain_count": len(hosts),
+            "domains": sorted(hosts),
+        }
+        for country, hosts in sorted(
+            country_domains.items(), key=lambda item: (-len(item[1]), item[0])
+        )[:10]
+    ]
+    summary["top_isps"] = [
+        {
+            "isp": isp,
+            "ip_count": len(ips),
+            "request_count": isp_requests.get(isp, 0),
+            "ips": [ips[ip] for ip in sorted(ips)],
+        }
+        for isp, ips in sorted(
+            isp_ips.items(),
+            key=lambda item: (
+                -isp_requests.get(item[0], 0),
+                -len(item[1]),
+                item[0],
+            ),
+        )[:10]
+    ]
+    return summary
+
+
 def get_all_pcap_list(search="", page=1, per_page=12):
     """Get PCAPs from pcap-metadata with ES-side pagination."""
     es = get_es()
@@ -1611,28 +1863,28 @@ def _apply_metadata_aggs(es, stats, sinkhole_id=None):
             "total_file_size":   {"sum": {"field": "file_size"}},
             "total_duration":    {"sum": {"field": "duration_seconds"}},
             "transport_breakdown": {
-                "terms": {"field": "transport_breakdown.label.keyword", "size": 100},
+                "terms": {"field": "transport_breakdown.label", "size": 100},
                 "aggs": {"total": {"sum": {"field": "transport_breakdown.value"}}}
             },
             "application_breakdown": {
-                "terms": {"field": "application_breakdown.label.keyword", "size": 100},
+                "terms": {"field": "application_breakdown.label", "size": 100},
                 "aggs": {"total": {"sum": {"field": "application_breakdown.value"}}}
             },
             "direction_breakdown": {
-                "terms": {"field": "direction_breakdown.label.keyword", "size": 100},
+                "terms": {"field": "direction_breakdown.label", "size": 100},
                 "aggs": {"total": {"sum": {"field": "direction_breakdown.value"}}}
             },
             "top_dns_domains": {
-                "terms": {"field": "top_dns_domains.label.keyword", "size": 1000},
+                "terms": {"field": "top_dns_domains.label", "size": 1000},
                 "aggs": {"total": {"sum": {"field": "top_dns_domains.value"}}}
             },
             "top_url_domains": {
-                "terms": {"field": "top_url_domains.label.keyword", "size": 1000},
+                "terms": {"field": "top_url_domains.label", "size": 1000},
                 "aggs": {"total": {"sum": {"field": "top_url_domains.value"}}}
             },
             "infected_hosts": {
                 "terms": {
-                    "field": "infected_host.keyword",
+                    "field": "infected_host",
                     "size": 10000,
                     "exclude": ["Unknown", "N/A", "-", "None", "null", ""]
                 }
@@ -1832,5 +2084,3 @@ def get_global_aggregation_fast(sinkhole_id=None):
     except Exception as e:
         print(f"get_global_aggregation_fast SSL error: {e}")
     return stats
-
-
