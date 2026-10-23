@@ -1665,6 +1665,7 @@ def get_dns_sinkhole_summary(sinkhole_id):
         "request_count": 0,
         "external_ip_count": 0,
         "internal_ip_count": 0,
+        "external_ips": [],
         "top_active_domains": [],
         "top_countries": [],
         "top_isps": [],
@@ -1694,6 +1695,7 @@ def get_dns_sinkhole_summary(sinkhole_id):
     pcap_query = {"terms": {"pcap_id": pcap_ids}}
     ip_metadata_by_pcap_ip = {}
     external_ips = set()
+    external_ip_records = {}
     internal_ips = set()
     for source in iter_source_docs(
         PCAP_IPS_INDEX,
@@ -1702,6 +1704,8 @@ def get_dns_sinkhole_summary(sinkhole_id):
             "ips.ip",
             "ips.is_internal",
             "ips.country",
+            "ips.city",
+            "ips.isp",
             "ips.latitude",
             "ips.longitude",
         ],
@@ -1712,20 +1716,34 @@ def get_dns_sinkhole_summary(sinkhole_id):
             ip = item.get("ip")
             if not ip:
                 continue
+            country = item.get("country")
+            if country:
+                country = str(country).strip()
+                country = _COUNTRY_ALIASES.get(
+                    country.casefold(),
+                    country.upper() if len(country) == 2 else country,
+                )
             if item.get("is_internal") is True:
                 internal_ips.add(ip)
             elif item.get("is_internal") is False:
                 external_ips.add(ip)
+                ip_details = external_ip_records.setdefault(
+                    ip,
+                    {
+                        "ip": ip,
+                        "country": country,
+                        "city": None,
+                        "isp": None,
+                        "latitude": None,
+                        "longitude": None,
+                    },
+                )
+                for field in ("country", "city", "isp", "latitude", "longitude"):
+                    if ip_details[field] is None and item.get(field) is not None:
+                        ip_details[field] = item[field]
             else:
                 continue
             if pcap_id:
-                country = item.get("country")
-                if country:
-                    country = str(country).strip()
-                    country = _COUNTRY_ALIASES.get(
-                        country.casefold(),
-                        country.upper() if len(country) == 2 else country,
-                    )
                 ip_metadata_by_pcap_ip[(pcap_id, ip)] = {
                     "country": country,
                     "latitude": item.get("latitude"),
@@ -1734,6 +1752,9 @@ def get_dns_sinkhole_summary(sinkhole_id):
 
     summary["external_ip_count"] = len(external_ips)
     summary["internal_ip_count"] = len(internal_ips)
+    summary["external_ips"] = [
+        external_ip_records[ip] for ip in sorted(external_ip_records)
+    ]
 
     domain_requests = {}
     domains = set()

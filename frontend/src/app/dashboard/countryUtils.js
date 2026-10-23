@@ -285,7 +285,24 @@ export function getCountryCode(rawName) {
 }
 
 export function getCountryFlagClass(rawName) {
-  const code = getCountryCode(rawName);
+  const normalizedName =
+    typeof rawName === "string" ? normalizeCountrySearchText(rawName) : "";
+  if (!normalizedName) return null;
+
+  const code =
+    getCountryCode(rawName) ??
+    Object.entries(COUNTRY_MAPPING).find(([name, country]) => {
+      const knownNames = [
+        name,
+        country.displayName,
+        ...getCountrySearchAliases(name),
+      ];
+      return knownNames.some(
+        (knownName) =>
+          normalizeCountrySearchText(knownName) === normalizedName,
+      );
+    })?.[1].code?.toLowerCase();
+
   return code ? `fi fi-${code}` : null;
 }
 

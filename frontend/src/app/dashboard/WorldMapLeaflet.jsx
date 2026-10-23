@@ -1026,29 +1026,51 @@ export function WorldMapLeaflet({
       const lat = Number(ip.latitude);
       const lng = Number(ip.longitude);
       const key = `${lat},${lng}`;
+      const country = ip.country || fallbackCountry;
+      const countryName =
+        typeof country === "string" ? country.trim() : String(country ?? "");
+      const packetCount = Number(ip.packet_count ?? ip.packets);
+      const hasPacketCount = Number.isFinite(packetCount);
       if (groups.has(key)) {
         const group = groups.get(key);
         group.count += 1;
         group.ips.push(ip);
-        group.totalPackets += ip.packets || ip.packet_count || 1;
+        if (countryName && countryName.toLowerCase() !== "unknown") {
+          group.countries.add(countryName);
+        }
+        if (hasPacketCount) group.totalPackets += packetCount;
+        group.hasPacketCount ||= hasPacketCount;
       } else {
         groups.set(key, {
           id: key,
           lat,
           lng,
           city: reportLabel || ip.city || "Unknown",
-          country:
-            reportType === "isp"
-              ? "ISP"
-              : ip.country || fallbackCountry || "Country",
-          categoryLabel: reportType === "isp" ? "ISP" : "Country",
+          countries: new Set(
+            countryName && countryName.toLowerCase() !== "unknown"
+              ? [countryName]
+              : [],
+          ),
+          country: "",
+          categoryLabel: "",
           ips: [ip],
           count: 1,
-          totalPackets: ip.packets || ip.packet_count || 1,
+          totalPackets: hasPacketCount ? packetCount : 0,
+          hasPacketCount,
         });
       }
     });
-    return Array.from(groups.values());
+    return Array.from(groups.values(), (group) => {
+      const countries = Array.from(group.countries);
+      const country =
+        countries.length > 1
+          ? "Multiple countries"
+          : countries[0] || "Unknown";
+      const categoryLabel =
+        reportType === "isp" ? reportLabel || "ISP" : country;
+
+      return { ...group, country, categoryLabel };
+    });
   }, [fallbackCountry, reportLabel, reportType, validIps, mode]);
 
   const [pcapDrillDownRequest, setPcapDrillDownRequest] = useState(null);
@@ -1353,7 +1375,9 @@ export function WorldMapLeaflet({
                             Packets:
                           </span>
                           <span className="text-foreground text-[9px]">
-                            {point.totalPackets.toLocaleString()}
+                            {point.hasPacketCount
+                              ? point.totalPackets.toLocaleString()
+                              : "—"}
                           </span>
                         </div>
                       </div>
@@ -1586,8 +1610,8 @@ export function WorldMapLeaflet({
               onPointerDown={(e) => e.stopPropagation()}
             >
               <div className="px-3 py-2 text-[10px] font-black uppercase tracking-wider text-slate-500 border-b border-theme">
-                {selectedGroup.count} IP{selectedGroup.count !== 1 ? "s" : ""}{" "}
-                in this region
+                {selectedGroup.ips.length} IP
+                {selectedGroup.ips.length !== 1 ? "s" : ""} in this region
               </div>
               <table className="w-full text-left border-separate border-spacing-y-1">
                 <thead className="sticky top-0 bg-card z-10">
@@ -1611,7 +1635,11 @@ export function WorldMapLeaflet({
                         {ip.ip}
                       </td>
                       <td className="px-3 py-2.5 text-right font-black text-[10px] text-blue-500">
-                        {ip.packet_count?.toLocaleString() || 1}
+                        {ip.packet_count != null || ip.packets != null
+                          ? Number(
+                              ip.packet_count ?? ip.packets,
+                            ).toLocaleString()
+                          : "—"}
                       </td>
                       <td className="px-3 py-2.5 text-right">
                         <button

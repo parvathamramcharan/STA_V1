@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import Link from "next/link";
 import { X } from "lucide-react";
 import DomainMap from "./components/DomainMap";
 import DomainPcaps from "./components/DomainPcaps";
@@ -16,7 +17,7 @@ import {
   Filter,
   Hash,
 } from "lucide-react";
-import { Map, FileText, Server, Network } from "lucide-react";
+import { Map, FileText, Server, Network, LayoutDashboard } from "lucide-react";
 const DOMAIN_TABS = [
   { id: "Map", icon: Map },
   { id: "PCAPs", icon: FileText },
@@ -217,13 +218,25 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
       {!selectedDomain && (
         <>
           <div className="flex items-center justify-between gap-4 px-6 pt-2 pb-4">
-            <h1 className="flex items-center gap-3 text-[22px] font-bold tracking-tight text-foreground">
-              DNS Sinkhole
-              <span className="flex items-center gap-1.5  border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-500">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-                {total_domains} Domains
-              </span>
-            </h1>
+            <div className="flex items-center gap-4">
+              <h1 className="flex items-center gap-3 text-[22px] font-bold tracking-tight text-foreground">
+                DNS Sinkhole
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 shadow-sm">
+                  <span className="font-bold tabular-nums">{total_domains}</span>
+                  <span>Domains</span>
+                </span>
+              </h1>
+              <Link
+                href="/sinkhole/dnssinkhole/overview"
+                className="group inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-700 shadow-sm transition-colors hover:border-blue-300 hover:bg-blue-100 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500/20"
+              >
+                <LayoutDashboard
+                  size={16}
+                  className="text-blue-600 transition-transform group-hover:scale-110"
+                />
+                Overview
+              </Link>
+            </div>
 
             <div className="group relative w-full max-w-md">
               <Search

@@ -39,6 +39,23 @@ export async function dnssinkhole(accessToken) {
     throw error;
   }
 }
+export async function dnsSinkoleSummary(accessToken){
+  try{
+    const res = await fetchWithTimeout(
+      `${BASE_URL}/pcaps/${DNS_SINKHOLE_ID}/dns-sinkhole/summary`,
+      {
+        headers : {
+          Authorization : `Bearer ${accessToken}`
+        }
+      }
+    );
+    if ( !res.ok ) throw new Error(`Failed to fetch dnsinkole summary data : ${res.status}`)
+    const json = await res.json();
+    return json.data;
+  }catch(error){
+    console.log("error while fetching data from dns-sinkhole summary",error);
+  }
+}
 export async function getISPdnsSinkholeDomain(domainName) {
   try {
     const res = await fetchWithTimeout(
@@ -57,3 +74,4 @@ export async function getISPdnsSinkholeDomain(domainName) {
     throw error;
   }
 }
+
