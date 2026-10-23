@@ -56,6 +56,7 @@ export async function middleware(request) {
   const isPublicRoute = pathname === "/";
   const isDashboardRoute = pathname.startsWith("/dashboard");
   const isPcapRoute = pathname.startsWith("/pcaps");
+  const isSinkholeRoute = pathname.startsWith("/sinkhole");
   const isReportsRoute = pathname.startsWith("/reports");
   const isUploadRoute = pathname.startsWith("/upload");
   const isAboutRoute = pathname.startsWith("/about");
@@ -64,6 +65,7 @@ export async function middleware(request) {
   const isProtectedRoute =
     isDashboardRoute ||
     isPcapRoute ||
+    isSinkholeRoute ||
     isReportsRoute ||
     isUploadRoute ||
     isAboutRoute ||
@@ -77,7 +79,11 @@ export async function middleware(request) {
   if (!isLoggedIn && isProtectedRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  if (isLoggedIn && !isAdmin && (isDashboardRoute || isPcapRoute)) {
+  if (
+    isLoggedIn &&
+    !isAdmin &&
+    (isDashboardRoute || isPcapRoute || isSinkholeRoute)
+  ) {
     return NextResponse.redirect(new URL("/reports?set=1", request.url));
   }
   if (isLoggedIn && !isAdmin && isFeedbackViewRoute) {
@@ -92,6 +98,7 @@ export const config = {
     "/",
     "/dashboard/:path*",
     "/pcaps/:path*",
+    "/sinkhole/:path*",
     "/reports/:path*",
     "/upload/:path*",
     "/about/:path*",

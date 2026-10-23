@@ -36,17 +36,22 @@ def _build_country_city_map_body(pcap_ids=None):
         "size": 0,
         "aggs": {
             "external": {
-                "nested": {"path": "external_ips"},
+                "nested": {"path": "ips"},
                 "aggs": {
-                    "by_country": {
-                        "terms": {"field": "external_ips.country", "size": 1000},
+                    "external_only": {
+                        "filter": {"term": {"ips.is_internal": False}},
                         "aggs": {
-                            "by_city": {
-                                "terms": {"field": "external_ips.city", "size": 1000, "missing": "Unknown"},
+                            "by_country": {
+                                "terms": {"field": "ips.country", "size": 1000},
                                 "aggs": {
-                                    "packets": {"sum": {"field": "external_ips.packet_count"}},
-                                    "avg_lat": {"avg": {"field": "external_ips.latitude"}},
-                                    "avg_lon": {"avg": {"field": "external_ips.longitude"}},
+                                    "by_city": {
+                                        "terms": {"field": "ips.city", "size": 1000, "missing": "Unknown"},
+                                        "aggs": {
+                                            "packets": {"sum": {"field": "ips.packet_count"}},
+                                            "avg_lat": {"avg": {"field": "ips.latitude"}},
+                                            "avg_lon": {"avg": {"field": "ips.longitude"}},
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -61,6 +66,7 @@ def _extract_country_city_locations(aggs):
     locations = []
     for country_bucket in (
         aggs.get('external', {})
+            .get('external_only', {})
             .get('by_country', {})
             .get('buckets', [])
     ):
@@ -120,14 +126,14 @@ def get_all_external_ips(limit=10000, sinkhole_id=None):
                 return []
             pcap_res = es.search(index=PCAP_IPS_INDEX, body={
                 "query": {"terms": {"pcap_id": pcap_ids}},
-                "_source": ["external_ips.ip"],
+                "_source": ["ips.ip", "ips.is_internal"],
                 "size": 10000,
             })
             ips = sorted({
                 entry.get("ip")
                 for hit in pcap_res.get("hits", {}).get("hits", [])
-                for entry in hit.get("_source", {}).get("external_ips", [])
-                if entry.get("ip")
+                for entry in hit.get("_source", {}).get("ips", [])
+                if entry.get("ip") and entry.get("is_internal") is False
             })[:limit]
             if not ips:
                 return []
@@ -210,23 +216,23 @@ def get_external_ips_global(limit=10000, sinkhole_id=None):
         res = es.search(index=PCAP_IPS_INDEX, body={
             "query": {"match_all": {}} if pcap_ids is None else {"terms": {"pcap_id": pcap_ids}},
             "size": 0,
-            "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-                "by_ip": {
-                    "terms": {
-                        "field": "external_ips.ip",
-                        "size": limit,
-                        "order": {"packets": "desc"},
-                    },
-                    "aggs": {
-                        "packets": {"sum": {"field": "external_ips.packet_count"}},
-                        "geo": {"top_hits": {
-                            "size": 1,
-                            "_source": ["external_ips.country", "external_ips.city",
-                                        "external_ips.isp", "external_ips.latitude",
-                                        "external_ips.longitude"],
-                        }},
-                    },
-                }
+            "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+                "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
+                    "by_ip": {
+                        "terms": {
+                            "field": "ips.ip",
+                            "size": limit,
+                            "order": {"packets": "desc"},
+                        },
+                        "aggs": {
+                            "packets": {"sum": {"field": "ips.packet_count"}},
+                            "geo": {"top_hits": {
+                                "size": 1,
+                                "_source": ["ips.country", "ips.city", "ips.isp", "ips.latitude", "ips.longitude"],
+                            }},
+                        },
+                    }
+                }}
             }}}
         })
     except Exception as e:
@@ -235,12 +241,18 @@ def get_external_ips_global(limit=10000, sinkhole_id=None):
 
     buckets = (res.get("aggregations", {})
                   .get("ext", {})
+                  .get("external_only", {})
                   .get("by_ip", {})
                   .get("buckets", []))
     records = []
     for b in buckets:
         hits = b.get("geo", {}).get("hits", {}).get("hits", [])
         src = hits[0].get("_source", {}) if hits else {}
+        nested_source = src.get("ips")
+        if isinstance(nested_source, list):
+            src = next((item for item in nested_source if item.get("ip") == b["key"]), {})
+        elif isinstance(nested_source, dict):
+            src = nested_source
         packets = int(b.get("packets", {}).get("value", 0) or 0)
         records.append({
             "ip": b["key"],
@@ -256,20 +268,22 @@ def get_external_ips_global(limit=10000, sinkhole_id=None):
 
 
 def aggregate_geo_from_external_ips(es_client, pcap_id):
-    """Aggregate country/isp/city from pcap-ips external_ips using nested terms aggs."""
+    """Aggregate country/isp/city from external entries in the nested ips field."""
     res = es_client.search(index=PCAP_IPS_INDEX, body={
         "query": {"term": {"pcap_id": pcap_id}},
         "size": 0,
-        "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-            "countries": {"terms": {"field": "external_ips.country", "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
-            "cities":    {"terms": {"field": "external_ips.city",    "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
-            "isps":      {"terms": {"field": "external_ips.isp",     "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
+        "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+          "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
+            "countries": {"terms": {"field": "ips.country", "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+            "cities":    {"terms": {"field": "ips.city",    "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+            "isps":      {"terms": {"field": "ips.isp",     "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+          }}
         }}}
     })
-    ext = res.get("aggregations", {}).get("ext", {})
+    ext = res.get("aggregations", {}).get("ext", {}).get("external_only", {})
     def _fmt(key):
         return sorted(
             [{"name": b["key"], "packets": int(b["packets"]["value"] or 0), "ip_count": b["doc_count"]}
@@ -284,16 +298,18 @@ def aggregate_geo_from_es(es_client, ips_index, pcap_ids=None):
     res = es_client.search(index=ips_index, body={
         "query": {"match_all": {}} if pcap_ids is None else {"terms": {"pcap_id": pcap_ids}},
         "size": 0,
-        "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-            "countries": {"terms": {"field": "external_ips.country", "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
-            "cities":    {"terms": {"field": "external_ips.city",    "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
-            "isps":      {"terms": {"field": "external_ips.isp",     "size": 10000},
-                          "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}},
+        "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+          "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
+            "countries": {"terms": {"field": "ips.country", "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+            "cities":    {"terms": {"field": "ips.city",    "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+            "isps":      {"terms": {"field": "ips.isp",     "size": 10000},
+                          "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}},
+          }}
         }}}
     })
-    ext = res.get("aggregations", {}).get("ext", {})
+    ext = res.get("aggregations", {}).get("ext", {}).get("external_only", {})
     def _fmt(key):
         return sorted(
             [{"name": b["key"], "count": b["doc_count"], "packets": int(b["packets"]["value"] or 0)}
@@ -318,21 +334,20 @@ def enrich_packet_counts(es_client, ips_index, matched_ips, hits):
         for start in range(0, len(target_ips), 60000):
             chunk = target_ips[start:start + 60000]
             res = es_client.search(index=ips_index, body={"size": 0, "aggs": {
-                "ext": {"nested": {"path": "external_ips"}, "aggs": {
-                    "matching": {
-                        "filter": {"terms": {"external_ips.ip": chunk}},
-                        "aggs": {
-                            "by_ip": {
-                                "terms": {"field": "external_ips.ip", "size": len(chunk), "include": chunk},
-                                "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}
-                            }
+                "ext": {"nested": {"path": "ips"}, "aggs": {
+                  "external_only": {"filter": {"bool": {"filter": [
+                      {"term": {"ips.is_internal": False}},
+                      {"terms": {"ips.ip": chunk}},
+                  ]}}, "aggs": {
+                    "by_ip": {
+                        "terms": {"field": "ips.ip", "size": len(chunk), "include": chunk},
+                        "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}
                         }
-                    }
+                  }}
                 }}
             }})
             buckets = (res.get("aggregations", {})
-                          .get("ext", {})
-                          .get("matching", {})
+                          .get("ext", {}).get("external_only", {})
                           .get("by_ip", {})
                           .get("buckets", []))
             for b in buckets:
@@ -361,8 +376,9 @@ def filter_ips_by_field(es_client, pcap_id, field, value):
             "aggs": {"ext": {"scripted_metric": {
                 "init_script": "state.map = [:]",
                 "map_script": """
-                    if (params._source.external_ips == null) return;
-                    for (item in params._source.external_ips) {
+                    if (params._source.ips == null) return;
+                    for (item in params._source.ips) {
+                        if (item.is_internal != false) continue;
                         def v = item[params.field];
                         if (v == null || v.toString() != params.value) continue;
                         def ip = item.ip;
@@ -395,5 +411,3 @@ def filter_ips_by_field(es_client, pcap_id, field, value):
     except Exception as e:
         print(f"filter_ips_by_field error: {e}")
         return []
-
-

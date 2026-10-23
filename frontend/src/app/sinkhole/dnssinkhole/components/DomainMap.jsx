@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Activity, MapPin } from "lucide-react";
-import { WorldMapLeaflet } from "../../../../dashboard/WorldMapLeaflet";
-import { fetchGlobalMapData } from "../../../../dashboard/dashboardApiService";
+import { WorldMapLeaflet } from "../../../dashboard/WorldMapLeaflet";
+import { fetchGlobalMapData } from "../../../dashboard/dashboardApiService";
 
 const EMPTY_IPS = [];
 

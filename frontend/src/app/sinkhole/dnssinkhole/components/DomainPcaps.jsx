@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Search, FileText, ChevronRight } from "lucide-react";
 
-export default function DomainPcaps({ selectedDomain }) {
+export default function DomainPcaps({ selectedDomain, setId }) {
   const [searchPcap, setSearchPcap] = useState("");
   const filteredPcaps = selectedDomain.pcap_ids.filter((item) =>
     item.toLowerCase().includes(searchPcap.toLowerCase()),
@@ -49,7 +49,7 @@ export default function DomainPcaps({ selectedDomain }) {
               key={item}
               onClick={() => {
                 const url = new URL(window.location.href);
-                url.pathname = "/pcaps/set-2";
+                url.pathname = `/pcaps/${setId}`;
                 url.searchParams.set("pcap", item);
                 url.searchParams.set("tab", "Pcap Summary");
                 window.location.href = url.toString();

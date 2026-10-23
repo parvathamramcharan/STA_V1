@@ -50,6 +50,8 @@ export function Navbar({ user }) {
 
   const roles = user?.roles || [];
   const isAdmin = roles.includes("admin");
+  const isPcapNavigationActive =
+    pathname.startsWith("/pcaps") || pathname.startsWith("/sinkhole");
   const firstLetter = user?.name ? user.name.charAt(0).toUpperCase() : "U";
 
   const handleLogout = async () => {
@@ -135,7 +137,7 @@ export function Navbar({ user }) {
               >
                 <button
                   className={`h-14 px-4 flex items-center gap-2 text-[15px] font-semibold  transition-all relative outline-none  dark:text-slate-400  ${
-                    pathname.startsWith("/pcaps")
+                    isPcapNavigationActive
                       ? "text-blue-500   "
                       : "text-slate-800 "
                   }`}
@@ -143,7 +145,7 @@ export function Navbar({ user }) {
                   <FileText
                     size={16}
                     className={
-                      pathname.startsWith("/pcaps")
+                      isPcapNavigationActive
                         ? "text-blue-500  "
                         : "text-slate-800  dark:text-slate-400 "
                     }
@@ -153,22 +155,30 @@ export function Navbar({ user }) {
                     size={14}
                     className={`transition-transform duration-200 ${pcapMenuOpen ? "rotate-180" : ""}`}
                   />
-                  {pathname.startsWith("/pcaps") && (
+                  {isPcapNavigationActive && (
                     <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 rounded-t-md shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
                   )}
                 </button>
 
                 {pcapMenuOpen && (
-                  <div className="absolute top-14 left-0 bg-card border border-theme shadow-2xl rounded-xl overflow-hidden p-1.5 min-w-[160px] z-50">
+                  <div className="absolute top-14 left-0 bg-card border border-theme shadow-2xl rounded-xl overflow-hidden p-1.5 min-w-[180px] z-50">
                     {[
                       { label: "Set 1", href: "/pcaps/set-1" },
                       { label: "Sinkhole Packets", href: "/pcaps/set-2" },
+                      {
+                        label: "DNS Sinkholing",
+                        href: "/sinkhole/dnssinkhole",
+                      },
+                      {
+                        label: "IP Sinkholing",
+                        href: "/sinkhole/ipsinkhole",
+                      },
                     ].map((set) => (
                       <Link
                         key={set.href}
                         href={set.href}
                         onClick={() => setPcapMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-3 py-2.5 text-[13px] font-semibold text-slate-600 dark:text-slate-400 rounded-lg hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+                        className="flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-[13px] font-semibold text-slate-600 transition-colors group hover:bg-blue-500/10 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-blue-500 transition-colors" />
                         {set.label}

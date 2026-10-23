@@ -6,7 +6,7 @@ def scroll_all_external_ips(es_client, index):
     all_ips = set()
     resp = es_client.search(index=index, body={
         "query": {"match_all": {}},
-        "_source": ["external_ips.ip"], "size": 500
+        "_source": ["ips.ip", "ips.is_internal"], "size": 500
     }, scroll="2m")
     sid = resp["_scroll_id"]
     while True:
@@ -15,7 +15,9 @@ def scroll_all_external_ips(es_client, index):
             break
         for h in hits:
             all_ips.update(
-                e["ip"] for e in (h["_source"].get("external_ips") or []) if e.get("ip")
+                e["ip"]
+                for e in (h["_source"].get("ips") or [])
+                if e.get("ip") and e.get("is_internal") is False
             )
         resp = es_client.scroll(scroll_id=sid, scroll="2m")
     try:
@@ -89,11 +91,42 @@ def get_pcap_ssl_domains(es_client, pcap_id):
 
 def get_pcap_ip_counts(es_client, pcap_id):
     """Return (internal_ip_count, external_ip_count) for a single PCAP."""
+    scroll_id = None
     try:
-        src = es_client.get(index='pcap-ips', id=pcap_id)["_source"]
-        return len(src.get("internal_ips", [])), len(src.get("external_ips", []))
-    except Exception:
+        res = es_client.search(index='pcap-ips', body={
+            "query": {"term": {"pcap_id": pcap_id}},
+            "_source": ["ips.ip", "ips.is_internal"],
+            "size": 500,
+        }, scroll="2m")
+        scroll_id = res.get("_scroll_id")
+        internal, external = set(), set()
+        while True:
+            hits = res.get("hits", {}).get("hits", [])
+            if not hits:
+                break
+            for hit in hits:
+                for item in hit.get("_source", {}).get("ips", []):
+                    ip = item.get("ip")
+                    if not ip:
+                        continue
+                    if item.get("is_internal") is True:
+                        internal.add(ip)
+                    elif item.get("is_internal") is False:
+                        external.add(ip)
+            if not scroll_id:
+                break
+            res = es_client.scroll(scroll_id=scroll_id, scroll="2m")
+            scroll_id = res.get("_scroll_id", scroll_id)
+        return len(internal), len(external)
+    except Exception as e:
+        print(f"Error fetching IP counts for {pcap_id}: {e}")
         return 0, 0
+    finally:
+        if scroll_id:
+            try:
+                es_client.clear_scroll(scroll_id=scroll_id)
+            except Exception as e:
+                print(f"Error clearing IP count scroll for {pcap_id}: {e}")
 
 
 def get_global_ftp_sessions(es_client, sinkhole_id=None):
@@ -211,10 +244,16 @@ def scroll_global_ip_sets(es_client, ips_index):
     """Return (unique_internal_ips, unique_external_ips) sets across all pcap-ips docs."""
     internal, external = set(), set()
     try:
-        for hit in _scroll_docs(es_client, ips_index, ["internal_ips.ip", "external_ips.ip"]):
+        for hit in _scroll_docs(es_client, ips_index, ["ips.ip", "ips.is_internal"]):
             src = hit["_source"]
-            internal.update(ip["ip"] for ip in src.get("internal_ips", []) if ip.get("ip"))
-            external.update(ip["ip"] for ip in src.get("external_ips", []) if ip.get("ip"))
+            for item in src.get("ips", []):
+                ip = item.get("ip")
+                if not ip:
+                    continue
+                if item.get("is_internal") is True:
+                    internal.add(ip)
+                elif item.get("is_internal") is False:
+                    external.add(ip)
     except Exception:
         pass
     return internal, external
@@ -257,9 +296,11 @@ def scroll_country_aggregation(es_client, ips_index, pcap_ids=None):
     country_packets = Counter()
     country_captures = defaultdict(set)
     query = {"match_all": {}} if pcap_ids is None else {"terms": {"pcap_id": pcap_ids}}
-    for hit in _scroll_docs(es_client, ips_index, ["external_ips", "pcap_id"], query=query):
+    for hit in _scroll_docs(es_client, ips_index, ["ips", "pcap_id"], query=query):
         pcap_id = hit["_source"].get("pcap_id")
-        for ip_entry in hit["_source"].get("external_ips", []):
+        for ip_entry in hit["_source"].get("ips", []):
+            if ip_entry.get("is_internal") is not False:
+                continue
             country = ip_entry.get("country")
             if not country:
                 continue

@@ -1,6 +1,8 @@
 export const BASE_URL =
   typeof window === "undefined" ? process.env.BACKEND_URL : "/api/proxy";
 
+const DNS_SINKHOLE_ID = 2;
+
 const fetchWithTimeout = async (url, options = {}) => {
   const { timeout = 30000, ...fetchOptions } = options;
   const controller = new AbortController();
@@ -20,11 +22,14 @@ const fetchWithTimeout = async (url, options = {}) => {
 
 export async function dnssinkhole(accessToken) {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/pcaps/dns-sinkhole`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    const res = await fetchWithTimeout(
+      `${BASE_URL}/pcaps/${DNS_SINKHOLE_ID}/dns-sinkhole`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       },
-    });
+    );
 
     if (!res.ok) throw new Error(`Failed to fetch dnsrequest:${res.status}`);
     const json = await res.json();
@@ -34,11 +39,10 @@ export async function dnssinkhole(accessToken) {
     throw error;
   }
 }
-//http://192.168.10.11:5000/api/pcaps/set/2/domains/phishing-test.test/isps
 export async function getISPdnsSinkholeDomain(domainName) {
   try {
     const res = await fetchWithTimeout(
-      `${BASE_URL}/pcaps/set/2/domains/${encodeURIComponent(domainName)}/isps`,
+      `${BASE_URL}/pcaps/set/${DNS_SINKHOLE_ID}/domains/${encodeURIComponent(domainName)}/isps`,
     );
 
     if (!res.ok) {

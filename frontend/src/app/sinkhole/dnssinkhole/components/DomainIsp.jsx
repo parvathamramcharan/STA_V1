@@ -30,9 +30,7 @@ export default function DomainIsp({
         setLoading(true);
         setError(null);
 
-        const data = await getISPdnsSinkholeDomain(
-          selectedDomain.host,
-        );
+        const data = await getISPdnsSinkholeDomain(selectedDomain.host);
 
         console.log("ISP data:", data);
 

@@ -18,7 +18,7 @@ ES_PASSWORD = os.getenv("ELASTIC_PASSWORD")
 
 # Granular Indexes
 PCAP_METADATA_INDEX = "pcap-metadata"  # Full PCAP metadata (superset of captures + dashboard)
-PCAP_IPS_INDEX = "pcap-ips"            # Granular per-pcap IP rows (packet counts, geo)
+PCAP_IPS_INDEX = "pcap-ips"            # Per-PCAP IP rows in the unified nested ips field
 GLOBAL_DASHBOARD_SINKHOLE_ID = 1
 PCAP_DNS_INDEX = "pcap-dns"            # Granular DNS/URL records
 PCAP_FILES_INDEX = "pcap-files"        # File transfer records
@@ -212,34 +212,19 @@ def create_granular_indexes():
     ips_mapping = {
         "mappings": {
             "properties": {
-                "pcap_id":                   {"type": "keyword"},
-                "external_ips": {
+                "pcap_id": {"type": "keyword"},
+                "ips": {
                     "type": "nested",
                     "properties": {
-                        "ip":                        {"type": "ip"},
-                        "packet_count":              {"type": "integer"},
-                        "country":                   {"type": "keyword"},
-                        "city":                      {"type": "keyword"},
-                        "isp":                       {"type": "keyword"},
-                        "latitude":                  {"type": "double"},
-                        "longitude":                 {"type": "double"},
-                        "location":                  {"type": "geo_point"},
-                        "is_internal":               {"type": "boolean"},
-                        "internal_connection_count": {"type": "integer"}
-                    }
-                },
-                "internal_ips": {
-                    "type": "nested",
-                    "properties": {
-                        "ip":                        {"type": "ip"},
-                        "packet_count":              {"type": "integer"},
-                        "country":                   {"type": "keyword"},
-                        "city":                      {"type": "keyword"},
-                        "isp":                       {"type": "keyword"},
-                        "latitude":                  {"type": "double"},
-                        "longitude":                 {"type": "double"},
-                        "location":                  {"type": "geo_point"},
-                        "is_internal":               {"type": "boolean"},
+                        "ip": {"type": "ip"},
+                        "packet_count": {"type": "integer"},
+                        "country": {"type": "keyword"},
+                        "city": {"type": "keyword"},
+                        "isp": {"type": "keyword"},
+                        "latitude": {"type": "double"},
+                        "longitude": {"type": "double"},
+                        "location": {"type": "geo_point"},
+                        "is_internal": {"type": "boolean"},
                         "internal_connection_count": {"type": "integer"}
                     }
                 }
@@ -430,7 +415,7 @@ def get_latest_dashboard_document(sinkhole_id=None):
             index=PCAP_METADATA_INDEX,
             body={"query": query},
             size=1,
-            sort=[{"analysis_timestamp": {"order": "desc"}}]
+            sort=[{"analysis_timestamp": {"order": "desc", "unmapped_type": "date"}}]
         )
         hits = res.get("hits", {}).get("hits", [])
         if hits:
@@ -459,6 +444,102 @@ def get_pcap_ids_for_sinkhole(sinkhole_id, es_client=None):
     except Exception as e:
         print(f"get_pcap_ids_for_sinkhole error: {e}")
         return []
+
+
+def get_pcap_ip_docs(pcap_ids, es_client=None):
+    """Collect and normalize IP records from all documents for each PCAP."""
+    if not pcap_ids:
+        return {}
+    es = es_client or get_es()
+    if not es:
+        return {}
+
+    response = es.search(
+        index=PCAP_IPS_INDEX,
+        body={
+            "query": {"terms": {"pcap_id": pcap_ids}},
+            "_source": ["pcap_id", "ips", "external_ips", "internal_ips"],
+            "size": 1000,
+        },
+        scroll="2m",
+    )
+    documents = {}
+    scroll_id = response.get("_scroll_id")
+
+    def add_records(target, field, records):
+        by_ip = target.setdefault(field, {})
+        for record in records or []:
+            ip = record.get("ip")
+            if ip:
+                by_ip[ip] = record
+
+    try:
+        while True:
+            hits = response.get("hits", {}).get("hits", [])
+            if not hits:
+                break
+            for hit in hits:
+                source = hit.get("_source", {})
+                pcap_id = source.get("pcap_id") or hit.get("_id")
+                target = documents.setdefault(
+                    pcap_id,
+                    {"pcap_id": pcap_id, "external_ips": {}, "internal_ips": {}},
+                )
+
+                if "ips" in source:
+                    records = source.get("ips") or []
+                    add_records(
+                        target,
+                        "external_ips",
+                        [record for record in records if record.get("is_internal") is False],
+                    )
+                    add_records(
+                        target,
+                        "internal_ips",
+                        [record for record in records if record.get("is_internal") is True],
+                    )
+                add_records(target, "external_ips", source.get("external_ips"))
+                add_records(target, "internal_ips", source.get("internal_ips"))
+
+            if not scroll_id:
+                break
+            response = es.scroll(scroll_id=scroll_id, scroll="2m")
+            scroll_id = response.get("_scroll_id", scroll_id)
+    finally:
+        if scroll_id:
+            es.clear_scroll(scroll_id=scroll_id)
+
+    for pcap_id in pcap_ids:
+        if pcap_id not in documents:
+            try:
+                doc = es.get(index=PCAP_IPS_INDEX, id=pcap_id)
+            except NotFoundError:
+                continue
+            source = doc.get("_source", {})
+            target = documents.setdefault(
+                pcap_id,
+                {"pcap_id": pcap_id, "external_ips": {}, "internal_ips": {}},
+            )
+            if "ips" in source:
+                records = source.get("ips") or []
+                add_records(
+                    target,
+                    "external_ips",
+                    [record for record in records if record.get("is_internal") is False],
+                )
+                add_records(
+                    target,
+                    "internal_ips",
+                    [record for record in records if record.get("is_internal") is True],
+                )
+            add_records(target, "external_ips", source.get("external_ips"))
+            add_records(target, "internal_ips", source.get("internal_ips"))
+
+    for document in documents.values():
+        for field in ("external_ips", "internal_ips"):
+            document[field] = list(document[field].values())
+    return documents
+
 
 # ---------------- SEARCH & AGGREGATIONS ----------------
 
@@ -522,15 +603,8 @@ def get_repository_stats(sinkhole_id=None):
             # Count distinct IPs across just this sinkhole's pcaps.
             unique = set()
             if scoped_pcap_ids:
-                mget_res = es.mget(
-                    index=PCAP_IPS_INDEX,
-                    body={"ids": scoped_pcap_ids},
-                    _source=["external_ips.ip", "internal_ips.ip"],
-                )
-                for doc in mget_res["docs"]:
-                    if not doc.get("found"):
-                        continue
-                    src = doc["_source"]
+                ip_docs = get_pcap_ip_docs(scoped_pcap_ids, es)
+                for src in ip_docs.values():
                     for entry in (src.get("external_ips") or []) + (src.get("internal_ips") or []):
                         ip = entry.get("ip")
                         if ip:
@@ -551,7 +625,7 @@ def get_global_aggregation(sinkhole_id=None):
 
 
 def _get_intel_ip_counts(sinkhole_id=None):
-    """Returns geo groups with real packet counts from pcap-ips external_ips."""
+    """Return geo groups with real packet counts from external entries in pcap-ips."""
     from aggregations import aggregate_geo_from_es
     es = get_es()
     if not es:
@@ -592,7 +666,7 @@ def get_ip_breakdown(pcap_id=None, sinkhole_id=None):
 def get_report_details(report_type, value):
     """Global per-IP breakdown for a country/isp, aggregated on pcap-ips.
 
-    Single nested aggregation: filter external_ips by the country/isp value,
+    Single nested aggregation: filter external IPs by the country/ISP value,
     group by IP, sum packet_count across all pcaps, and pull geo via top_hits.
     Packet counts come straight from pcap-ips (no ip-intelligence round-trip).
     """
@@ -605,31 +679,31 @@ def get_report_details(report_type, value):
     if '%' in value:
         value = urllib.parse.unquote(value)
 
-    field = {'isp': 'external_ips.isp', 'country': 'external_ips.country'}.get(report_type.lower())
+    field = {'isp': 'ips.isp', 'country': 'ips.country'}.get(report_type.lower())
     if not field: return []
 
     try:
         res = es.search(index=PCAP_IPS_INDEX, body={
             "size": 0,
-            "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-                "matching": {
-                    "filter": {"term": {field: value}},
-                    "aggs": {
-                        "by_ip": {
-                            "terms": {"field": "external_ips.ip", "size": 10000},
-                            "aggs": {
-                                "packets": {"sum": {"field": "external_ips.packet_count"}},
-                                "lat": {"max": {"field": "external_ips.latitude"}},
-                                "lon": {"max": {"field": "external_ips.longitude"}},
-                            }
+            "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+                "external_only": {"filter": {"bool": {"filter": [
+                    {"term": {"ips.is_internal": False}},
+                    {"term": {field: value}},
+                ]}}, "aggs": {
+                    "by_ip": {
+                        "terms": {"field": "ips.ip", "size": 10000},
+                        "aggs": {
+                            "packets": {"sum": {"field": "ips.packet_count"}},
+                            "lat": {"max": {"field": "ips.latitude"}},
+                            "lon": {"max": {"field": "ips.longitude"}},
                         }
                     }
-                }
+                }}
             }}}
         })
         buckets = (res.get("aggregations", {})
                       .get("ext", {})
-                      .get("matching", {})
+                      .get("external_only", {})
                       .get("by_ip", {})
                       .get("buckets", []))
         rows = []
@@ -664,28 +738,26 @@ def list_isps_for_sinkhole(sinkhole_id, page=1, per_page=50, search=""):
         if not pcap_ids:
             return {"isps": [], "total": 0, "page": page, "per_page": per_page, "total_pages": 0}
 
-        isp_filter = {}
-        if search:
-            isp_filter = {"filter": {"wildcard": {"external_ips.isp": {"value": f"*{search}*", "case_insensitive": True}}}}
-
         res = es.search(index=PCAP_IPS_INDEX, body={
             "size": 0,
             "query": {"terms": {"pcap_id": pcap_ids}},
-            "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-                "by_isp": {
-                    "terms": {"field": "external_ips.isp", "size": 10000, "order": {"_count": "desc"}},
-                    "aggs": {
-                        "ips": {"cardinality": {"field": "external_ips.ip"}},
-                        "packets": {"sum": {"field": "external_ips.packet_count"}},
-                    },
-                }
+            "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+                "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
+                    "by_isp": {
+                        "terms": {"field": "ips.isp", "size": 10000, "order": {"_count": "desc"}},
+                        "aggs": {
+                            "ips": {"cardinality": {"field": "ips.ip"}},
+                            "packets": {"sum": {"field": "ips.packet_count"}},
+                        },
+                    }
+                }}
             }}},
         })
     except Exception as e:
         print(f"list_isps_for_sinkhole error: {e}")
         return {"isps": [], "total": 0, "page": page, "per_page": per_page, "total_pages": 0}
 
-    buckets = res["aggregations"]["ext"]["by_isp"]["buckets"]
+    buckets = res["aggregations"]["ext"]["external_only"]["by_isp"]["buckets"]
     if search:
         s = search.lower()
         buckets = [b for b in buckets if b["key"] and s in b["key"].lower()]
@@ -726,20 +798,20 @@ def get_ips_by_isp_for_sinkhole(sinkhole_id, isp, page=1, per_page=100):
         res = es.search(index=PCAP_IPS_INDEX, body={
             "size": 0,
             "query": {"terms": {"pcap_id": pcap_ids}},
-            "aggs": {"ext": {"nested": {"path": "external_ips"}, "aggs": {
-                "matching": {
-                    "filter": {"term": {"external_ips.isp": isp}},
-                    "aggs": {
-                        "by_ip": {
-                            "terms": {"field": "external_ips.ip", "size": 10000},
-                            "aggs": {
-                                "packets": {"sum": {"field": "external_ips.packet_count"}},
-                                "lat": {"max": {"field": "external_ips.latitude"}},
-                                "lon": {"max": {"field": "external_ips.longitude"}},
-                            },
-                        }
-                    },
-                }
+            "aggs": {"ext": {"nested": {"path": "ips"}, "aggs": {
+                "external_only": {"filter": {"bool": {"filter": [
+                    {"term": {"ips.is_internal": False}},
+                    {"term": {"ips.isp": isp}},
+                ]}}, "aggs": {
+                    "by_ip": {
+                        "terms": {"field": "ips.ip", "size": 10000},
+                        "aggs": {
+                            "packets": {"sum": {"field": "ips.packet_count"}},
+                            "lat": {"max": {"field": "ips.latitude"}},
+                            "lon": {"max": {"field": "ips.longitude"}},
+                        },
+                    }
+                }}
             }}},
         })
     except Exception as e:
@@ -747,7 +819,7 @@ def get_ips_by_isp_for_sinkhole(sinkhole_id, isp, page=1, per_page=100):
         return {"isp": isp, "ips": [], "total": 0, "page": page, "per_page": per_page, "total_pages": 0}
 
     buckets = (res.get("aggregations", {}).get("ext", {})
-                  .get("matching", {}).get("by_ip", {}).get("buckets", []))
+                  .get("external_only", {}).get("by_ip", {}).get("buckets", []))
     rows = [{
         "ip": b["key"],
         "packet_count": int(b["packets"]["value"] or 0),
@@ -856,7 +928,13 @@ def get_pcaps_for_ip(ip):
         res = es.search(index=PCAP_IPS_INDEX, body={
             "_source": ["pcap_id"],
             "size": 10000,
-            "query": {"term": {"external_ips.ip": ip}}
+            "query": {"nested": {
+                "path": "ips",
+                "query": {"bool": {"filter": [
+                    {"term": {"ips.ip": ip}},
+                    {"term": {"ips.is_internal": False}},
+                ]}},
+            }}
         })
         pcap_ids = [h["_source"]["pcap_id"] for h in res["hits"]["hits"] if h["_source"].get("pcap_id")]
         if not pcap_ids:
@@ -884,40 +962,26 @@ def get_pcaps_for_ips_bulk(ip_list):
     try:
         res = es.search(index=PCAP_IPS_INDEX, body={
             "size": 10000,
-            "_source": ["pcap_id", "external_ips.ip"],
+            "_source": ["pcap_id", "ips.ip", "ips.is_internal"],
             "query": {"nested": {
-                "path": "external_ips",
-                "query": {"terms": {"external_ips.ip": ip_list}}
+                "path": "ips",
+                "query": {"bool": {"filter": [
+                    {"terms": {"ips.ip": ip_list}},
+                    {"term": {"ips.is_internal": False}},
+                ]}},
             }},
-            "aggs": {"ip_to_pcaps": {"scripted_metric": {
-                "init_script": "state.map = [:]",
-                "map_script": """
-                    def pid = params._source.pcap_id;
-                    if (pid == null || params._source.external_ips == null) return;
-                    for (item in params._source.external_ips) {
-                        def ip = item.ip;
-                        if (ip == null) continue;
-                        def k = ip.toString();
-                        if (!state.map.containsKey(k)) state.map[k] = [];
-                        if (!state.map[k].contains(pid)) state.map[k].add(pid);
-                    }
-                """,
-                "combine_script": "return state.map",
-                "reduce_script": """
-                    def out = [:];
-                    for (s in states) {
-                        for (e in s.entrySet()) {
-                            if (!out.containsKey(e.getKey())) out[e.getKey()] = [];
-                            for (pid in e.getValue()) {
-                                if (!out[e.getKey()].contains(pid)) out[e.getKey()].add(pid);
-                            }
-                        }
-                    }
-                    return out;
-                """
-            }}}
         })
-        ip_pcap_map = res.get("aggregations", {}).get("ip_to_pcaps", {}).get("value") or {}
+        ip_pcap_map = {}
+        for hit in res.get("hits", {}).get("hits", []):
+            pid = hit.get("_source", {}).get("pcap_id")
+            if not pid:
+                continue
+            for item in hit.get("_source", {}).get("ips", []):
+                ip = item.get("ip")
+                if ip in ip_list and item.get("is_internal") is False:
+                    ip_pcap_map.setdefault(ip, [])
+                    if pid not in ip_pcap_map[ip]:
+                        ip_pcap_map[ip].append(pid)
         # collect all unique pcap_ids
         all_pcap_ids = list({pid for pids in ip_pcap_map.values() for pid in pids})
         if not all_pcap_ids:
@@ -998,22 +1062,13 @@ def enrich_rows_with_pcap_appearance_data(rows, pcaps_map=None):
 def get_external_ips_for_pcap(pcap_id):
     es = get_es()
     if not es: return []
-    try:
-        doc = es.get(index=PCAP_IPS_INDEX, id=pcap_id)
-        return doc["_source"].get("external_ips", [])
-    except Exception:
-        return []
+    source = get_pcap_ip_docs([pcap_id], es).get(pcap_id, {})
+    return source.get("external_ips", [])
 
 
 def get_internal_ips_for_pcap(pcap_id):
-    es = get_es()
-    if not es:
-        return []
-    try:
-        doc = es.get(index=PCAP_IPS_INDEX, id=pcap_id)
-        return doc["_source"].get("internal_ips", [])
-    except Exception:
-        return []
+    source = get_pcap_ip_docs([pcap_id]).get(pcap_id, {})
+    return source.get("internal_ips", [])
 
 
 def get_dns_queries_for_pcap(pcap_id, limit=200):
@@ -1043,21 +1098,24 @@ def get_ip_geo_from_pcap_ips(ip):
         return {}
     try:
         res = es.search(index=PCAP_IPS_INDEX, body={
-            "query": {"term": {"ip": ip}},
-            "_source": ["country", "city", "isp", "asn", "latitude", "longitude"],
+            "query": {"nested": {
+                "path": "ips",
+                "query": {"term": {"ips.ip": ip}},
+            }},
+            "_source": ["ips"],
             "size": 1
         })
         hits = res.get("hits", {}).get("hits", [])
         if hits:
-            src = hits[0]["_source"]
-            return {
-                "country": src.get("country"),
-                "city": src.get("city"),
-                "isp": src.get("isp"),
-                "asn": src.get("asn"),
-                "latitude": src.get("latitude"),
-                "longitude": src.get("longitude"),
-            }
+            for entry in hits[0].get("_source", {}).get("ips", []):
+                if entry.get("ip") == ip:
+                    return {
+                        "country": entry.get("country"),
+                        "city": entry.get("city"),
+                        "isp": entry.get("isp"),
+                        "latitude": entry.get("latitude"),
+                        "longitude": entry.get("longitude"),
+                    }
     except Exception:
         pass
     return {}
@@ -1125,14 +1183,17 @@ def refresh_map_country_cache(sinkhole_id=GLOBAL_DASHBOARD_SINKHOLE_ID):
             res = es.search(index=PCAP_IPS_INDEX, body={
                 "query": {"terms": {"pcap_id": pcap_ids}},
                 "size": 0,
-                "aggs": {"external": {"nested": {"path": "external_ips"}, "aggs": {
-                    "countries": {"terms": {"field": "external_ips.country", "size": 10000}, "aggs": {
-                        "avg_lat": {"avg": {"field": "external_ips.latitude"}},
-                        "avg_lon": {"avg": {"field": "external_ips.longitude"}},
+                "aggs": {"external": {"nested": {"path": "ips"}, "aggs": {
+                    "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
+                    "countries": {"terms": {"field": "ips.country", "size": 10000}, "aggs": {
+                        "avg_lat": {"avg": {"field": "ips.latitude"}},
+                        "avg_lon": {"avg": {"field": "ips.longitude"}},
+                    }}
                     }}
                 }}}
             })
-            buckets = res.get("aggregations", {}).get("external", {}).get("countries", {}).get("buckets", [])
+            buckets = (res.get("aggregations", {}).get("external", {})
+                       .get("external_only", {}).get("countries", {}).get("buckets", []))
             for b in buckets:
                 country_coords[b["key"]] = {
                     "latitude":  b["avg_lat"].get("value"),
@@ -1402,7 +1463,7 @@ def get_pcap_files(pcap_id):
         return []
 
 
-def get_dns_requests(pcap_id=None, page=1, per_page=50, search=""):
+def get_dns_requests(pcap_id=None, page=1, per_page=50, search="", pcap_ids=None):
     """Return URL request records from dns-requests.
 
     Each record: url, host, uri, connected_ip_count, request_count,
@@ -1422,6 +1483,8 @@ def get_dns_requests(pcap_id=None, page=1, per_page=50, search=""):
     must = []
     if pcap_id:
         must.append({"term": {"pcap_id": pcap_id}})
+    elif pcap_ids is not None:
+        must.append({"terms": {"pcap_id": pcap_ids}})
     if search:
         must.append({"wildcard": {"url": {"value": f"*{search.lower()}*", "case_insensitive": True}}})
     # Exclude raw IPv4-literal hosts -- these are direct-to-IP requests, not domains.
@@ -1560,6 +1623,25 @@ def get_dns_requests(pcap_id=None, page=1, per_page=50, search=""):
     return {"requests": page_slice, "total": total, "page": page, "per_page": per_page, "total_pages": total_pages}
 
 
+def get_dns_requests_for_sinkhole(sinkhole_id, page=1, per_page=50, search=""):
+    """Return DNS request records aggregated across a sinkhole set's PCAPs."""
+    pcap_ids = get_pcap_ids_for_sinkhole(sinkhole_id)
+    if not pcap_ids:
+        return {
+            "requests": [],
+            "total": 0,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": 0,
+        }
+    return get_dns_requests(
+        page=page,
+        per_page=per_page,
+        search=search,
+        pcap_ids=pcap_ids,
+    )
+
+
 def get_dns_sinkhole_summary(sinkhole_id):
     """Return DNS request totals and top domain, country, and ISP stats."""
     es = get_es()
@@ -1614,40 +1696,38 @@ def get_dns_sinkhole_summary(sinkhole_id):
         PCAP_IPS_INDEX,
         [
             "pcap_id",
-            "external_ips.ip",
-            "external_ips.country",
-            "external_ips.latitude",
-            "external_ips.longitude",
-            "internal_ips.ip",
-            "internal_ips.country",
-            "internal_ips.latitude",
-            "internal_ips.longitude",
+            "ips.ip",
+            "ips.is_internal",
+            "ips.country",
+            "ips.latitude",
+            "ips.longitude",
         ],
         pcap_query,
     ):
         pcap_id = source.get("pcap_id")
-        for field, ip_set in (
-            ("external_ips", external_ips),
-            ("internal_ips", internal_ips),
-        ):
-            for item in source.get(field) or []:
-                ip = item.get("ip")
-                if not ip:
-                    continue
-                ip_set.add(ip)
-                if pcap_id:
-                    country = item.get("country")
-                    if country:
-                        country = str(country).strip()
-                        country = _COUNTRY_ALIASES.get(
-                            country.casefold(),
-                            country.upper() if len(country) == 2 else country,
-                        )
-                    ip_metadata_by_pcap_ip[(pcap_id, ip)] = {
-                        "country": country,
-                        "latitude": item.get("latitude"),
-                        "longitude": item.get("longitude"),
-                    }
+        for item in source.get("ips") or []:
+            ip = item.get("ip")
+            if not ip:
+                continue
+            if item.get("is_internal") is True:
+                internal_ips.add(ip)
+            elif item.get("is_internal") is False:
+                external_ips.add(ip)
+            else:
+                continue
+            if pcap_id:
+                country = item.get("country")
+                if country:
+                    country = str(country).strip()
+                    country = _COUNTRY_ALIASES.get(
+                        country.casefold(),
+                        country.upper() if len(country) == 2 else country,
+                    )
+                ip_metadata_by_pcap_ip[(pcap_id, ip)] = {
+                    "country": country,
+                    "latitude": item.get("latitude"),
+                    "longitude": item.get("longitude"),
+                }
 
     summary["external_ip_count"] = len(external_ips)
     summary["internal_ip_count"] = len(internal_ips)
@@ -1780,7 +1860,7 @@ def get_all_pcap_list(search="", page=1, per_page=12):
             body={
                 "query": query,
                 "_source": ["pcap_id", "pcap_filename", "file_name", "file_size", "summary", "total_packets", "duration_seconds", "unique_ips"],
-                "sort": [{"analysis_timestamp": {"order": "desc"}}],
+                "sort": [{"analysis_timestamp": {"order": "desc", "unmapped_type": "date"}}],
                 "from": start,
                 "size": per_page,
             }
@@ -1803,23 +1883,122 @@ def get_all_pcap_list(search="", page=1, per_page=12):
 
 
 def get_time_series(pcap_id=None):
-    """Return pre-aggregated time_series from the zeek-conn sentinel doc."""
+    """Return pre-aggregated time_series from PCAP metadata or Zeek records."""
     es = get_es()
     if not es:
         return []
-    try:
-        if pcap_id:
-            doc = es.get(index="zeek-conn", id=pcap_id)["_source"]
-            return doc.get("time_series", [])
-        # Global: merge time_series from all sentinel docs
-        res = es.search(index="zeek-conn", body={"query": {"match_all": {}}, "size": 1000,
-                                                  "_source": ["time_series"]})
+
+    def merge_time_series(hits):
         from collections import defaultdict
         merged = defaultdict(int)
-        for h in res["hits"]["hits"]:
-            for point in (h["_source"].get("time_series") or []):
-                merged[point["label"]] += point["value"]
-        return [{"label": k, "value": v} for k, v in sorted(merged.items())]
+        for hit in hits:
+            for point in hit.get("_source", {}).get("time_series") or []:
+                label = point.get("label")
+                value = point.get("value")
+                if label is not None and value is not None:
+                    merged[label] += value
+        return [{"label": label, "value": value} for label, value in sorted(merged.items())]
+
+    def build_series_from_connections(hits):
+        from collections import defaultdict
+        counts = defaultdict(int)
+        for hit in hits:
+            source = hit.get("_source", {})
+            connections = source.get("connections")
+            if isinstance(connections, list):
+                rows = connections
+            else:
+                rows = [source]
+            for row in rows:
+                raw_ts = row.get("ts") or row.get("timestamp")
+                if raw_ts is None:
+                    continue
+                try:
+                    if isinstance(raw_ts, (int, float)):
+                        timestamp = datetime.fromtimestamp(raw_ts, timezone.utc)
+                    else:
+                        timestamp = datetime.fromisoformat(str(raw_ts).replace("Z", "+00:00"))
+                        if timestamp.tzinfo is None:
+                            timestamp = timestamp.replace(tzinfo=timezone.utc)
+                    label = timestamp.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+                except (ValueError, TypeError, OverflowError, OSError):
+                    continue
+                counts[label] += 1
+        return [{"label": label, "value": value} for label, value in sorted(counts.items())]
+
+    def search_pcap_zeek_records(target_pcap_id):
+        query = {"term": {"pcap_id": target_pcap_id}}
+        response = es.search(index=ZEEK_CONN_INDEX, body={
+            "query": query,
+            "size": 1000,
+            "_source": ["time_series", "connections", "ts", "timestamp", "pcap_id"],
+        }, scroll="2m")
+        hits = []
+        scroll_id = response.get("_scroll_id")
+        try:
+            while True:
+                page_hits = response.get("hits", {}).get("hits", [])
+                if not page_hits:
+                    break
+                hits.extend(page_hits)
+                if not scroll_id:
+                    break
+                response = es.scroll(scroll_id=scroll_id, scroll="2m")
+                scroll_id = response.get("_scroll_id", scroll_id)
+        finally:
+            if scroll_id:
+                es.clear_scroll(scroll_id=scroll_id)
+        return hits
+
+    try:
+        if pcap_id:
+            query = {"bool": {"should": [
+                {"term": {"pcap_id": pcap_id}},
+                {"term": {"file_id": pcap_id}},
+            ], "minimum_should_match": 1}}
+            metadata = es.search(index=PCAP_METADATA_INDEX, body={
+                "query": query,
+                "size": 1000,
+                "_source": ["time_series"],
+            })
+            data = merge_time_series(metadata.get("hits", {}).get("hits", []))
+            if data:
+                return data
+
+            # Generate the series from Zeek connection timestamps when no summary was stored.
+            zeek_hits = search_pcap_zeek_records(pcap_id)
+            data = merge_time_series(zeek_hits)
+            if data:
+                return data
+            data = build_series_from_connections(zeek_hits)
+            if data:
+                return data
+
+            # Older deployments may use the PCAP ID as the Zeek document ID.
+            try:
+                legacy = es.get(index=ZEEK_CONN_INDEX, id=pcap_id)
+                legacy_hits = [{"_source": legacy.get("_source", {})}]
+                return merge_time_series(legacy_hits) or build_series_from_connections(legacy_hits)
+            except NotFoundError:
+                return []
+
+        # Global: prefer dashboard metadata, retaining compatibility with older Zeek documents.
+        metadata = es.search(index=PCAP_METADATA_INDEX, body={
+            "query": {"match_all": {}},
+            "size": 10000,
+            "_source": ["time_series"],
+        })
+        data = merge_time_series(metadata.get("hits", {}).get("hits", []))
+        if data:
+            return data
+
+        zeek = es.search(index=ZEEK_CONN_INDEX, body={
+            "query": {"match_all": {}},
+            "size": 10000,
+            "_source": ["time_series", "connections", "ts", "timestamp", "pcap_id"],
+        })
+        zeek_hits = zeek.get("hits", {}).get("hits", [])
+        return merge_time_series(zeek_hits) or build_series_from_connections(zeek_hits)
     except Exception as e:
         print(f"time_series error: {e}")
         return []
@@ -1940,7 +2119,7 @@ def _apply_ip_aggs(es, stats, pcap_ids=None):
             "ip_stats": {
                 "scripted_metric": {
                     "init_script": "state.external = [:]; state.internal = new HashSet()",
-                    "map_script": "if (params._source.external_ips != null) { for (item in params._source.external_ips) { def ip = item.ip; if (ip != null) { def key = ip.toString(); def packets = item.packet_count == null ? 0 : item.packet_count; state.external[key] = (state.external.containsKey(key) ? state.external[key] : 0) + packets; } } } if (params._source.internal_ips != null) { for (item in params._source.internal_ips) { def ip = item.ip; if (ip != null) { def s = ip.toString(); state.internal.add(s); } } }",
+                    "map_script": "if (params._source.ips != null) { for (item in params._source.ips) { def ip = item.ip; if (ip == null) continue; def key = ip.toString(); if (item.is_internal == false) { def packets = item.packet_count == null ? 0 : item.packet_count; state.external[key] = (state.external.containsKey(key) ? state.external[key] : 0) + packets; } else if (item.is_internal == true) { state.internal.add(key); } } }",
                     "combine_script": "return ['external': state.external, 'internal': state.internal]",
                     "reduce_script": "def external = [:]; def internal = new HashSet(); for (s in states) { for (e in s.external.entrySet()) { external[e.getKey()] = (external.containsKey(e.getKey()) ? external[e.getKey()] : 0) + e.getValue(); } internal.addAll(s.internal); } return ['external': external, 'internal': internal];"
                 }
@@ -1959,15 +2138,18 @@ def _apply_ip_aggs(es, stats, pcap_ids=None):
             "query": query,
             "size": 0,
             "aggs": {
-                "ext": {"nested": {"path": "external_ips"}, "aggs": {
+                "ext": {"nested": {"path": "ips"}, "aggs": {
+                    "external_only": {"filter": {"term": {"ips.is_internal": False}}, "aggs": {
                     "top_ips": {
-                        "terms": {"field": "external_ips.ip", "size": 10},
-                        "aggs": {"packets": {"sum": {"field": "external_ips.packet_count"}}}
+                        "terms": {"field": "ips.ip", "size": 10},
+                        "aggs": {"packets": {"sum": {"field": "ips.packet_count"}}}
                     }
+                    }}
                 }}
             }
         })
-        buckets = top_res.get("aggregations", {}).get("ext", {}).get("top_ips", {}).get("buckets", [])
+        buckets = (top_res.get("aggregations", {}).get("ext", {})
+                   .get("external_only", {}).get("top_ips", {}).get("buckets", []))
         top_ips_list = [
             {"ip": b["key"], "packets": int(b["packets"]["value"] or 0), "connections": 0}
             for b in buckets

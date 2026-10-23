@@ -32,7 +32,7 @@ const SORT_OPTIONS = [
   { id: "ips", label: "Connected IPs" },
   { id: "pcaps", label: "PCAPs" },
 ];
-export default function DomainwiseClient({ dnsData }) {
+export default function DomainwiseClient({ dnsData, pcapSetId }) {
   const total_domains = dnsData.length;
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [activeTab, setActiveTab] = useState("Map");
@@ -46,9 +46,13 @@ export default function DomainwiseClient({ dnsData }) {
   const cardRefs = useRef(new globalThis.Map());
   const previousPositions = useRef(new globalThis.Map());
 
+  const filterDomains = dnsData.filter((item) =>
+    item.host.toLowerCase().includes(searchDomain.toLowerCase()),
+  );
+
   useEffect(() => {
     const url = new URL(window.location.href);
-    const domain = url.pathname.split("/").pop();
+    const domain = decodeURIComponent(url.pathname.split("/").pop());
 
     if (domain !== "dnssinkhole") {
       const item = dnsData.find((item) => item.host === domain);
@@ -61,7 +65,7 @@ export default function DomainwiseClient({ dnsData }) {
   useEffect(() => {
     const handlePopState = () => {
       const url = new URL(window.location.href);
-      const domain = url.pathname.split("/").pop();
+      const domain = decodeURIComponent(url.pathname.split("/").pop());
 
       if (domain === "dnssinkhole") {
         setSelectedDomain(null);
@@ -99,21 +103,16 @@ export default function DomainwiseClient({ dnsData }) {
 
     const url = new URL(window.location.href);
 
-    // url.pathname = `${url.pathname}/${item.host}`;
-    url.pathname = `/pcaps/set-2/dnssinkhole/${item.host}`;
+    url.pathname = `/sinkhole/dnssinkhole/${encodeURIComponent(item.host)}`;
     window.history.pushState({}, "", url);
   };
 
   const handleClose = () => {
     const url = new URL(window.location.href);
-    url.pathname = "/pcaps/set-2/dnssinkhole";
+    url.pathname = "/sinkhole/dnssinkhole";
     window.history.pushState({}, "", url);
     window.dispatchEvent(new PopStateEvent("popstate"));
   };
-
-  const filterDomains = dnsData.filter((item) =>
-    item.host.toLowerCase().includes(searchDomain.toLowerCase()),
-  );
 
   const sortedDomains =
     sortBy === "random" && randomOrder.length > 0
@@ -456,7 +455,10 @@ export default function DomainwiseClient({ dnsData }) {
               )}
 
               {activeTab === "PCAPs" && (
-                <DomainPcaps selectedDomain={selectedDomain} />
+                <DomainPcaps
+                  selectedDomain={selectedDomain}
+                  setId={pcapSetId}
+                />
               )}
 
               {activeTab === "ISP" && (

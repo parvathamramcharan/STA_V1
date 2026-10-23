@@ -521,7 +521,10 @@ def get_overview(request: Request, current_user: dict = Depends(require_role('ad
         scoped_pcap_id = pcap_id or _query_param(request, 'pcap_id', None, str)
         if scoped_pcap_id:
             data = elastic.get_dashboard_document(scoped_pcap_id)
-            if not data or data.get('file_id') != scoped_pcap_id:
+            if not data or (
+                data.get('file_id') != scoped_pcap_id
+                and data.get('pcap_id') != scoped_pcap_id
+            ):
                 return api_response(data=None, success=False, error=f'No analysis found for {scoped_pcap_id}', status_code=404)
             ssl_domains = get_pcap_ssl_domains(es, scoped_pcap_id)
             internal_ip_count, external_ip_count = get_pcap_ip_counts(es, scoped_pcap_id)
@@ -545,7 +548,10 @@ def get_insights(request: Request, current_user: dict = Depends(require_role('ad
         scoped_pcap_id = pcap_id or _query_param(request, 'pcap_id', None, str)
         if scoped_pcap_id:
             data = elastic.get_dashboard_document(scoped_pcap_id)
-            if not data or data.get('file_id') != scoped_pcap_id:
+            if not data or (
+                data.get('file_id') != scoped_pcap_id
+                and data.get('pcap_id') != scoped_pcap_id
+            ):
                 return api_response(data=None, success=False, error=f'No analysis found for {scoped_pcap_id}', status_code=404)
             sf_counts = elastic.get_sf_connection_counts_for_pcap(scoped_pcap_id)
 
@@ -714,23 +720,24 @@ def export_pcap_connections(pcap_id: str, current_user: dict = Depends(require_r
 
 
 # ============= DNS REQUESTS (URLs + connected IPs) =============
-@app.get('/api/pcaps/dns-sinkhole')
-@app.get('/api/pcaps/{pcap_id}/dns-sinkhole')
+@app.get('/api/pcaps/{set_id}/dns-sinkhole')
 
-def get_dns_requests(request: Request, current_user: dict = Depends(require_role('admin', 'user'))):
+def get_dns_requests(
+    request: Request,
+    set_id: int,
+    current_user: dict = Depends(require_role('admin', 'user')),
+):
     """List URLs seen in HTTP traffic with the client IPs that connected to them.
 
     Each record includes the url, connected IP count, and the connected IPs
     with their ISP, latitude and longitude.
     """
-    pcap_id = request.path_params.get('pcap_id', None)
-
     try:
         page     = _query_param(request, 'page', 1, int)
         per_page = _query_param(request, 'per_page', 50, int)
         search   = _query_param(request, 'search', '', str)
-        result   = elastic.get_dns_requests(
-            pcap_id=pcap_id,
+        result   = elastic.get_dns_requests_for_sinkhole(
+            sinkhole_id=set_id,
             page=page,
             per_page=per_page,
             search=search,
@@ -746,14 +753,14 @@ def get_dns_requests(request: Request, current_user: dict = Depends(require_role
         return api_response(data=[], success=False, error=str(e), status_code=500)
 
 
-@app.get('/api/pcaps/{sinkhole_id}/dns-sinkhole/summary')
+@app.get('/api/pcaps/{set_id}/dns-sinkhole/summary')
 def get_dns_sinkhole_summary(
-    sinkhole_id: int,
+    set_id: int,
     current_user: dict = Depends(require_role('admin', 'user')),
 ):
     """Return DNS-sinkhole totals for the requested sinkhole set."""
     try:
-        return api_response(data=elastic.get_dns_sinkhole_summary(sinkhole_id))
+        return api_response(data=elastic.get_dns_sinkhole_summary(set_id))
     except Exception as e:
         return api_response(data=None, success=False, error=str(e), status_code=500)
 
@@ -785,7 +792,7 @@ def get_all_pcap_analyses(current_user: dict = Depends(require_role('admin'))):
                 "query": {"match_all": {}},
                 "_source": ["pcap_id", "pcap_filename", "file_name", "file_size", "total_packets", "duration_seconds", "unique_ips", "analysis_timestamp"],
                 "size": 10000,
-                "sort": [{"analysis_timestamp": {"order": "desc"}}]
+                "sort": [{"analysis_timestamp": {"order": "desc", "unmapped_type": "date"}}]
             }
         )
         data = [hit["_source"] for hit in res["hits"]["hits"]]
@@ -990,23 +997,18 @@ def get_pcaps(request: Request, current_user: dict = Depends(require_role('admin
                 "query": query,
                 "_source": ["pcap_id", "pcap_filename", "file_name", "file_size", "total_packets", "duration_seconds", "start_time_utc", "end_time_utc"],
                 "size": 10000,
-                "sort": [{"analysis_timestamp": {"order": "desc"}}]
+                "sort": [{"analysis_timestamp": {"order": "desc", "unmapped_type": "date"}}]
             }
         )
 
         hits = res["hits"]["hits"]
         pcap_ids = [h["_source"].get("pcap_id") for h in hits if h["_source"].get("pcap_id")]
 
-        ip_count_map = {}
-        if pcap_ids:
-            mget_res = _es.mget(
-                index=elastic.PCAP_IPS_INDEX,
-                body={"ids": pcap_ids},
-                _source=["external_ips"]
-            )
-            for doc in mget_res["docs"]:
-                if doc.get("found"):
-                    ip_count_map[doc["_id"]] = len(doc["_source"].get("external_ips") or [])
+        ip_docs = elastic.get_pcap_ip_docs(pcap_ids, _es)
+        ip_count_map = {
+            pcap_id: len(doc.get("external_ips") or [])
+            for pcap_id, doc in ip_docs.items()
+        }
 
         all_pcaps = []
         for hit in hits:

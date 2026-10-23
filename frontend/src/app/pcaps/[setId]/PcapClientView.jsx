@@ -670,7 +670,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
 
               {setId == 2 && (
                 <Link
-                  href="/pcaps/set-2/dnssinkhole"
+                  href="/sinkhole/dnssinkhole"
                   className="group relative inline-flex items-center gap-2 px-3 py-1.5
              text-sm font-semibold text-red-500
              border border-red-500/30
@@ -685,6 +685,18 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                   </span>
 
                   <span>DNS Sinkholing</span>
+                </Link>
+              )}
+              {setId == 3 && (
+                <Link
+                  href="/sinkhole/ipsinkhole"
+                  className="group relative inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold text-red-500 border border-red-500/30 bg-red-500/[0.04] hover:bg-red-500/[0.08] hover:border-red-500/50 transition-all duration-200"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-60 animate-ping" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                  </span>
+                  <span>IP Sinkholing</span>
                 </Link>
               )}
             </h1>
