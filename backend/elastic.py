@@ -1466,10 +1466,11 @@ def get_pcap_files(pcap_id):
 def get_dns_requests(pcap_id=None, page=1, per_page=50, search="", pcap_ids=None):
     """Return URL request records from dns-requests.
 
-    Each record: url, host, uri, connected_ip_count, request_count,
-    connected_ips[{ip, isp, latitude, longitude}]. Optionally scoped to a
-    pcap_id and/or filtered by a url/host substring. Sorted by connected IP
-    count (desc), then request count (desc).
+    Each record includes url, host, uri, connected_ip_count, request_count,
+    total_connections, and connected_ips[{ip, isp, latitude, longitude}].
+    total_connections is the summed request_count for that domain. Optionally
+    scoped to a pcap_id and/or filtered by a url/host substring. Sorted by
+    connected IP count (desc), then request count (desc).
 
     When no pcap_id is given, the same URL can exist as separate per-pcap
     documents. Those are merged into a single row per URL: connected IPs are
@@ -1524,6 +1525,7 @@ def get_dns_requests(pcap_id=None, page=1, per_page=50, search="", pcap_ids=None
             "uri": h["_source"].get("uri"),
             "connected_ip_count": h["_source"].get("connected_ip_count", 0),
             "request_count": h["_source"].get("request_count", 0),
+            "total_connections": h["_source"].get("request_count", 0),
             "connected_ips": h["_source"].get("connected_ips", []),
             "pcap_id": h["_source"].get("pcap_id"),
         } for h in hits]
@@ -1611,6 +1613,7 @@ def get_dns_requests(pcap_id=None, page=1, per_page=50, search="", pcap_ids=None
             "url": b["key"],
             "connected_ip_count": int(merged.get("ip_count", len(connected_ips)) or 0),
             "request_count": int(merged.get("reqs", 0) or 0),
+            "total_connections": int(merged.get("reqs", 0) or 0),
             "connected_ips": connected_ips,
             "pcap_ids": sorted(merged.get("pcaps", []) or []),
         })

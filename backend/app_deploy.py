@@ -729,8 +729,8 @@ def get_dns_requests(
 ):
     """List URLs seen in HTTP traffic with the client IPs that connected to them.
 
-    Each record includes the url, connected IP count, and the connected IPs
-    with their ISP, latitude and longitude.
+    Each record includes the URL, connected IP count, total connections, and
+    the connected IPs with their ISP, latitude and longitude.
     """
     try:
         page     = _query_param(request, 'page', 1, int)

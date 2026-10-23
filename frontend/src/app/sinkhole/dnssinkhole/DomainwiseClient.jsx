@@ -332,7 +332,7 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
                           </div>
                         </span>
                       </div>
-                      <div className="mt-8 flex w-full items-center text-[16px] text-muted-foreground">
+                      <div className="mt-8 flex w-full gap-8 items-center text-[16px] text-muted-foreground">
                         <span className="flex items-center gap-3">
                           <FileText size={16} className="text-orange-500" />
                           <div className="flex flex-col">
@@ -344,7 +344,17 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
                             </span>
                           </div>
                         </span>
-                        <span></span>
+                        <span className="flex items-center gap-3">
+                          <Network size={16} className="text-blue-500" />
+                          <div className="flex flex-col">
+                            <span className="text-foreground font-bold">
+                              {Number(item.total_connections).toLocaleString()}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              Connections
+                            </span>
+                          </div>
+                        </span>
                       </div>
                     </div>
                     <ChevronRight
