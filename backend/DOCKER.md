@@ -13,6 +13,10 @@ templates. The backend `.env` must contain the admin/user credentials and
 Elasticsearch settings. Set the same random `JWT_SECRET` in both `.env` files;
 it must be at least 32 bytes. Keep both files private and do not commit them.
 
+Access tokens are valid for one hour by default (`JWT_EXPIRY_SECONDS=3600` in
+`backend/.env`). Refresh-token lifetime is configured separately with
+`JWT_REFRESH_EXPIRY_SECONDS`.
+
 Set `ELASTIC_USER` and `ELASTIC_PASSWORD` in `backend/.env` if the remote
 Elasticsearch server requires basic authentication. Alternatively, set
 `ES_API_KEY`. Configure `ES_HOST` if the server address differs.

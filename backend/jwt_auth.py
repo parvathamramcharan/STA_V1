@@ -166,9 +166,9 @@ def _get_secret():
     return secret.encode("utf-8")
 
 
-def _create_token(username, role, token_type, lifetime_env):
+def _create_token(username, role, token_type, lifetime_env, default_lifetime):
     try:
-        lifetime = int(os.getenv(lifetime_env, "300"))
+        lifetime = int(os.getenv(lifetime_env, str(default_lifetime)))
     except ValueError as error:
         raise RuntimeError(f"{lifetime_env} must be an integer") from error
     if lifetime <= 0:
@@ -198,12 +198,12 @@ def _create_token(username, role, token_type, lifetime_env):
 
 
 def create_access_token(username, role):
-    return _create_token(username, role, "access", "JWT_EXPIRY_SECONDS")
+    return _create_token(username, role, "access", "JWT_EXPIRY_SECONDS", 3600)
 
 
 def create_refresh_token(username, role):
     return _create_token(
-        username, role, "refresh", "JWT_REFRESH_EXPIRY_SECONDS"
+        username, role, "refresh", "JWT_REFRESH_EXPIRY_SECONDS", 300
     )
 
 
