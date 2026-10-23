@@ -164,7 +164,8 @@ export function Navbar({ user }) {
                   <div className="absolute top-14 left-0 bg-card border border-theme shadow-2xl rounded-xl overflow-hidden p-1.5 min-w-[180px] z-50">
                     {[
                       { label: "Set 1", href: "/pcaps/set-1" },
-                      { label: "Sinkhole Packets", href: "/pcaps/set-2" },
+                      { label: "DNS Sinkhole PCAP's", href: "/pcaps/set-2" },
+                      { label: "IP Sinkhole PCAP's", href: "/pcaps/set-3" },
                       {
                         label: "DNS Sinkholing",
                         href: "/sinkhole/dnssinkhole",

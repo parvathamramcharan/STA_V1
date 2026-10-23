@@ -652,7 +652,8 @@ export default function PcapClientView({ setId, initialResponse, session }) {
           <div className="flex items-center justify-between shrink-0 p t-1">
             <h1 className="text-[22px] font-bold tracking-tight font-sans text-foreground flex items-center gap-3 ml-6">
               {setId == 1 && "PCAP Set 1"}
-              {setId == 2 && "Sinkhole Packets"}
+              {setId == 2 && "DNS Sinkhole Packets"}
+              {setId == 3 && "IP Sinkhole Packets"}
               <span className="text-amber-500 text-sm font-sans  bg-amber-500/10 px-3 py-1 rounded-none border border-amber-500/20">
                 {stats.total_pcaps || initialData.length} Files
               </span>
