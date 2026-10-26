@@ -115,7 +115,7 @@ export default function DnsSinkoleSummaryDashboard({
   );
 
   return (
-    <div className="h-[calc(100vh-56px)] overflow-y-auto bg-slate-50 px-16 py-3">
+    <div className="h-[calc(100vh-56px)] overflow-y-auto bg-slate-50 px-4 py-3">
       <div className="mx-auto flex max-w-[1800px] flex-col gap-5">
 
         {/* HEADER */}
