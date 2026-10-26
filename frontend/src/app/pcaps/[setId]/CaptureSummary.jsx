@@ -65,13 +65,13 @@ function KpiCard({
       <div className="flex items-center gap-4">
         <div>
           <p
-            className={`${titleClass} font-semibold text-slate-800 dark:text-slate-100 mb-2`}
+            className={`${titleClass} font-semibold text-slate-800  mb-2`}
           >
             {title}
           </p>
 
           <h3
-            className={`${valueClass} text-black dark:text-slate-400 tabular-nums ${colorClass}`}
+            className={`${valueClass} text-black  tabular-nums ${colorClass}`}
           >
             {value}
           </h3>
@@ -489,7 +489,7 @@ export default function CaptureSummary({
                 vertical={false}
                 stroke="currentColor"
                 strokeDasharray="3 3"
-                className="text-slate-200 dark:text-slate-800"
+                className="text-slate-200 "
               />
 
               <XAxis
@@ -499,7 +499,7 @@ export default function CaptureSummary({
                   fill: "currentColor",
                   fontFamily: "sans-serif",
                 }}
-                className="text-slate-500 dark:text-slate-400"
+                className="text-slate-500 "
                 axisLine={{
                   stroke: "currentColor",
                 }}
@@ -529,7 +529,7 @@ export default function CaptureSummary({
                   fill: "currentColor",
                   fontFamily: "sans-serif",
                 }}
-                className="text-slate-500 dark:text-slate-400"
+                className="text-slate-500 "
                 axisLine={{
                   stroke: "currentColor",
                 }}
@@ -725,39 +725,39 @@ export default function CaptureSummary({
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-theme bg-slate-500/5 transition-colors">
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Timestamp
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Source IP
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Dest IP
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Duration
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Port
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Protocol
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Service
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Status
                 </th>
 
-                <th className="px-8 py-4 font-sans font-semibold dark:text-slate-300 text-left">
+                <th className="px-8 py-4 font-sans font-semibold  text-left">
                   Bytes
                 </th>
               </tr>
@@ -781,7 +781,7 @@ export default function CaptureSummary({
                     className="hover:bg-blue-500/[0.04] transition-colors group border-b border-theme last:border-0"
                   >
                     <td className="px-8 py-3.5 whitespace-nowrap">
-                      <span className="font-sans dark:text-slate-400 tabular-nums">
+                      <span className="font-sans  tabular-nums">
                         {formatTimestamp(conn.timestamp || conn.ts)}
                       </span>
                     </td>
@@ -821,7 +821,7 @@ export default function CaptureSummary({
                     </td>
 
                     <td className="px-8 py-3.5">
-                      <span className="font-sans dark:text-slate-400">
+                      <span className="font-sans ">
                         {formatDuration(
                           conn.duration || conn["id.duration"] || 0,
                         )}
@@ -838,18 +838,18 @@ export default function CaptureSummary({
                     </td>
 
                     <td className="px-8 py-3.5">
-                      <span className="font-sans dark:text-slate-400 uppercase">
+                      <span className="font-sans  uppercase">
                         {conn.proto || conn.protocol}
                       </span>
                     </td>
 
                     <td className="px-8 py-3.5">
                       {conn.service ? (
-                        <span className="font-sans text-purple-600 dark:text-purple-400 uppercase bg-purple-500/10 px-2.5 py-1 rounded-none border border-purple-500/20 inline-block">
+                        <span className="font-sans text-purple-600  uppercase bg-purple-500/10 px-2.5 py-1 rounded-none border border-purple-500/20 inline-block">
                           {conn.service}
                         </span>
                       ) : (
-                        <span className="text-[12px] font-bold text-slate-300 dark:text-slate-600">
+                        <span className="text-[12px] font-bold text-slate-300 ">
                           —
                         </span>
                       )}
@@ -859,12 +859,12 @@ export default function CaptureSummary({
                       <span
                         className={`font-sans leading-snug ${
                           isEstablished
-                            ? "text-emerald-600 dark:text-emerald-400"
+                            ? "text-emerald-600 "
                             : isRefused
-                              ? "text-rose-600 dark:text-rose-400"
+                              ? "text-rose-600 "
                               : isPending
-                                ? "text-amber-600 dark:text-amber-400"
-                                : "text-slate-500 dark:text-slate-400"
+                                ? "text-amber-600 "
+                                : "text-slate-500 "
                         }`}
                         title={stateDesc}
                       >
@@ -981,42 +981,42 @@ export default function CaptureSummary({
           ===================================================== */}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/65 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl  ">
             <div className="mb-5 flex items-start gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-300">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600  ">
                 <Lock size={20} />
               </div>
 
               <div>
-                <h4 className="font-serif font-bold text-lg dark:text-slate-100">
+                <h4 className="font-serif font-bold text-lg ">
                   Secure ZIP Password
                 </h4>
 
-                <p className="mt-1 font-serif dark:text-slate-200">
+                <p className="mt-1 font-serif ">
                   This export is password protected. Use the password below to
                   open the archive.
                 </p>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/70">
-              <div className="mb-2 font-normal dark:text-slate-400">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4  ">
+              <div className="mb-2 font-normal ">
                 Password Pattern
               </div>
 
-              <div className="text-sm font-semibold dark:text-slate-200">
+              <div className="text-sm font-semibold ">
                 sta# + @ + pcap id
               </div>
 
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-blue-200 bg-white px-3 py-2.5 dark:border-blue-500/20 dark:bg-slate-900/80">
-                <span className="font-mono text-sm font-bold tracking-wide text-slate-800 dark:text-slate-100">
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-blue-200 bg-white px-3 py-2.5  ">
+                <span className="font-mono text-sm font-bold tracking-wide text-slate-800 ">
                   {exportPassword}
                 </span>
 
                 <button
                   type="button"
                   onClick={handleCopyPassword}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-slate-600 transition-all hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300"
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] text-slate-600 transition-all hover:border-blue-500 hover:text-blue-600  "
                 >
                   {isPasswordCopied ? (
                     <CheckCircle2 size={14} />
@@ -1033,7 +1033,7 @@ export default function CaptureSummary({
               <button
                 type="button"
                 onClick={() => setShowPasswordModal(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-all hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-all hover:bg-slate-100   "
               >
                 Cancel
               </button>
@@ -1082,39 +1082,39 @@ export default function CaptureSummary({
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-theme bg-slate-500/5 transition-colors">
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Timestamp
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Source IP
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Dest IP
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Duration
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Port
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Protocol
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Service
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Status
                       </th>
 
-                      <th className="px-4 py-3 font-sans font-semibold dark:text-slate-300 text-left">
+                      <th className="px-4 py-3 font-sans font-semibold  text-left">
                         Bytes
                       </th>
                     </tr>
@@ -1221,7 +1221,7 @@ export default function CaptureSummary({
                               </td>
 
                               <td className="px-4 py-3.5">
-                                <span className="font-sans dark:text-slate-400">
+                                <span className="font-sans ">
                                   {formatDuration(
                                     conn.duration || conn["id.duration"] || 0,
                                   )}
@@ -1238,18 +1238,18 @@ export default function CaptureSummary({
                               </td>
 
                               <td className="px-4 py-3.5">
-                                <span className="font-sans dark:text-slate-400 uppercase">
+                                <span className="font-sans  uppercase">
                                   {conn.proto || conn.protocol}
                                 </span>
                               </td>
 
                               <td className="px-4 py-3.5">
                                 {conn.service ? (
-                                  <span className="font-sans text-purple-600 dark:text-purple-400 uppercase bg-purple-500/10 px-2.5 py-1 rounded-none border border-purple-500/20 inline-block">
+                                  <span className="font-sans text-purple-600  uppercase bg-purple-500/10 px-2.5 py-1 rounded-none border border-purple-500/20 inline-block">
                                     {conn.service}
                                   </span>
                                 ) : (
-                                  <span className="text-[12px] font-bold text-slate-300 dark:text-slate-600">
+                                  <span className="text-[12px] font-bold text-slate-300 ">
                                     —
                                   </span>
                                 )}
@@ -1259,12 +1259,12 @@ export default function CaptureSummary({
                                 <span
                                   className={`font-sans leading-snug ${
                                     isEstablished
-                                      ? "text-emerald-600 dark:text-emerald-400"
+                                      ? "text-emerald-600 "
                                       : isRefused
-                                        ? "text-rose-600 dark:text-rose-400"
+                                        ? "text-rose-600 "
                                         : isPending
-                                          ? "text-amber-600 dark:text-amber-400"
-                                          : "text-slate-500 dark:text-slate-400"
+                                          ? "text-amber-600 "
+                                          : "text-slate-500 "
                                   }`}
                                   title={stateDesc}
                                 >

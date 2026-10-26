@@ -74,7 +74,7 @@ function CustomTooltip({ active, payload, label }) {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-3 text-[12px] font-medium text-foreground z-50">
+    <div className="bg-white  border border-slate-200  rounded-xl shadow-xl p-3 text-[12px] font-medium text-foreground z-50">
       <p className="text-foreground/60 text-[10px] mb-1.5 font-bold">
         {label || payload[0].name || payload[0].payload?.label}
       </p>

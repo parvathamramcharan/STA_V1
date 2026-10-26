@@ -241,7 +241,7 @@ export default function DashboardClientView({ session }) {
       {/* =====================================================
           WORLD MAP
           ===================================================== */}
-      <div className="mx-6 mt-4 h-[clamp(500px,68vh,680px)] overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_20px_50px_rgba(71,85,105,0.14),0_2px_10px_rgba(71,85,105,0.06)] dark:border-slate-700/70 dark:bg-slate-900 dark:shadow-[0_20px_50px_rgba(2,6,23,0.38)]">
+      <div className="mx-6 mt-4 h-[clamp(500px,68vh,680px)] overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_20px_50px_rgba(71,85,105,0.14),0_2px_10px_rgba(71,85,105,0.06)]   ">
         <WorldMapLeaflet
           mode="summary"
           countryData={mapData}
@@ -261,7 +261,7 @@ export default function DashboardClientView({ session }) {
           ===================================================== */}
       <div
         ref={tabBarRef}
-        className="sticky top-14 z-30 w-full bg-white py-4  dark:bg-slate-950"
+        className="sticky top-14 z-30 w-full bg-white py-4  "
       >
         <div className="mx-6">
           {/* -------------------------------------------------
@@ -279,9 +279,9 @@ export default function DashboardClientView({ session }) {
               bg-slate-50
               shadow-[0_0_0_1px_rgba(59,130,246,0.06),0_0_25px_rgba(59,130,246,0.10)]
 
-              dark:border-blue-400/25
-              dark:bg-slate-900
-              dark:shadow-[0_0_0_1px_rgba(59,130,246,0.08),0_0_30px_rgba(59,130,246,0.12)]
+              
+              
+              
             "
           >
             {/* -------------------------------------------------
@@ -299,7 +299,7 @@ export default function DashboardClientView({ session }) {
                 from-transparent
                 via-blue-400/60
                 to-transparent
-                dark:via-blue-400/40
+                
               "
             />
 
@@ -333,8 +333,8 @@ export default function DashboardClientView({ session }) {
 
                         ${
                           isActive
-                            ? "text-blue-600 dark:text-blue-400"
-                            : "text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                            ? "text-blue-600 "
+                            : "text-slate-700 hover:text-blue-600  "
                         }
                       `}
                     >
@@ -349,7 +349,7 @@ export default function DashboardClientView({ session }) {
                           ${
                             isActive
                               ? "text-blue-500 drop-shadow-[0_0_7px_rgba(59,130,246,0.7)]"
-                              : "text-blue-500/80 group-hover:text-blue-500 dark:text-blue-400/80 dark:group-hover:text-blue-400"
+                              : "text-blue-500/80 group-hover:text-blue-500  "
                           }
                         `}
                       />
@@ -367,7 +367,7 @@ export default function DashboardClientView({ session }) {
                           ${
                             isActive
                               ? "text-blue-500"
-                              : "text-blue-500/80 group-hover:text-blue-500 dark:text-blue-400/80 dark:group-hover:text-blue-400"
+                              : "text-blue-500/80 group-hover:text-blue-500  "
                           }
                         `}
                       />
@@ -417,9 +417,9 @@ export default function DashboardClientView({ session }) {
                         group-hover:translate-y-0
                         group-hover:opacity-100
 
-                        dark:border-blue-400/25
-                        dark:bg-slate-900
-                        dark:shadow-[0_20px_50px_rgba(0,0,0,0.35)]
+                        
+                        
+                        
                       "
                     >
                       {/* Dropdown heading */}
@@ -431,7 +431,7 @@ export default function DashboardClientView({ session }) {
                             uppercase
                             tracking-[0.15em]
                             text-slate-400
-                            dark:text-slate-500
+                            
                           "
                         >
                           Explore reports by
@@ -460,8 +460,8 @@ export default function DashboardClientView({ session }) {
 
                           ${
                             reportInitialMode === "country"
-                              ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                              : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                              ? "bg-blue-500/10 text-blue-600  "
+                              : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600  "
                           }
                         `}
                       >
@@ -491,8 +491,8 @@ export default function DashboardClientView({ session }) {
 
                           ${
                             reportInitialMode === "isp"
-                              ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                              : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                              ? "bg-blue-500/10 text-blue-600  "
+                              : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600  "
                           }
                         `}
                       >
@@ -526,14 +526,14 @@ export default function DashboardClientView({ session }) {
 
                     ${
                       index < tabs.length - 1
-                        ? "border-r border-blue-200/40 dark:border-blue-400/15"
+                        ? "border-r border-blue-200/40 "
                         : ""
                     }
 
                     ${
                       isActive
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                        ? "text-blue-600 "
+                        : "text-slate-700 hover:text-blue-600  "
                     }
                   `}
                 >
@@ -548,7 +548,7 @@ export default function DashboardClientView({ session }) {
                       ${
                         isActive
                           ? "text-blue-500 drop-shadow-[0_0_7px_rgba(59,130,246,0.7)]"
-                          : "text-slate-400 dark:text-slate-500"
+                          : "text-slate-400 "
                       }
                     `}
                   />

@@ -16,7 +16,7 @@ export default async function DomainwisePage() {
 
   return (
     <div>
-      <DomainwiseClient dnsData={dnsData} pcapSetId="set-2" />
+      <DomainwiseClient dnsData={dnsData} />
     </div>
   );
 }

@@ -1,10 +1,9 @@
 @import "tailwindcss";
 @import "flag-icons/css/flag-icons.min.css";
 
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
-
 @layer base {
   :root {
+    color-scheme: light;
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
     --card: 0 0% 100%;
@@ -12,16 +11,6 @@
     --border: 214 32% 91%;
     --nav: 0 0% 100%;
     --primary: 221 83% 53%;
-  }
-
-  [data-theme="dark"] {
-    --background: 222 47% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --nav: 222 47% 7%;
-    --primary: 217 91% 60%;
   }
 }
 
@@ -52,16 +41,8 @@ body {
   border-color: rgba(0, 0, 0, 0.06) !important;
 }
 
-[data-theme="dark"] .border-theme {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-}
-
 .divide-theme > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(0, 0, 0, 0.04) !important;
-}
-
-[data-theme="dark"] .divide-theme > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .bg-nav {

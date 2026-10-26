@@ -148,10 +148,10 @@ export function DashboardSummary({ data }) {
                   />
                 </div>
                 <div>
-                  <p className="text-[14px] font-bold text-slate-800 dark:text-slate-100 mb-0.5">
+                  <p className="text-[14px] font-bold text-slate-800  mb-0.5">
                     {kpi.label}
                   </p>
-                  <h3 className="text-[15px] text-black dark:text-slate-400 tabular-nums">
+                  <h3 className="text-[15px] text-black  tabular-nums">
                     {kpi.value}
                   </h3>
                 </div>

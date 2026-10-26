@@ -147,7 +147,7 @@ const StatItem = memo(({ label, value, icon: Icon, color, isSelected }) => {
           {value}
         </div>
         <div
-          className={`text-[11px] font-semibold font-sans uppercase tracking-wide leading-none mt-1 whitespace-nowrap ${isSelected ? "text-blue-100/60" : "text-slate-500 dark:text-slate-400"}`}
+          className={`text-[11px] font-semibold font-sans uppercase tracking-wide leading-none mt-1 whitespace-nowrap ${isSelected ? "text-blue-100/60" : "text-slate-500 "}`}
         >
           {label}
         </div>
@@ -186,7 +186,7 @@ const PcapCard = memo(({ file, isSelected, onClick }) => {
       {/* <div className="relative z-10 flex flex-col items-start text-left gap-1.5 h-[72px]"> */}
       <div className="relative z-10 flex flex-col gap-1.5 h-[60px]">
         <span
-          className={`font-bold text-[10px] uppercase tracking-[0.12em] whitespace-nowrap ${isSelected ? "text-blue-100/70" : "text-blue-600/70 dark:text-slate-400"}`}
+          className={`font-bold text-[10px] uppercase tracking-[0.12em] whitespace-nowrap ${isSelected ? "text-blue-100/70" : "text-blue-600/70 "}`}
         >
           PCAP File :
         </span>
@@ -909,7 +909,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
             className="w-full min-w-0 bg-background"
           >
             <div className="w-full overflow-hidden">
-              <div className="mx-6 mt-4 flex items-center overflow-visible rounded-2xl border border-blue-400/40 bg-slate-50 shadow-[0_0_0_1px_rgba(59,130,246,0.06),0_0_25px_rgba(59,130,246,0.10)] dark:border-blue-400/25 dark:bg-slate-900 dark:shadow-[0_0_0_1px_rgba(59,130,246,0.08),0_0_30px_rgba(59,130,246,0.12)]">
+              <div className="mx-6 mt-4 flex items-center overflow-visible rounded-2xl border border-blue-400/40 bg-slate-50 shadow-[0_0_0_1px_rgba(59,130,246,0.06),0_0_25px_rgba(59,130,246,0.10)]   ">
                 <div className="flex min-w-0 flex-1 items-center overflow-visible">
                   {TABS.map((tab) => {
                     if (tab.id === "Reports") {
@@ -920,10 +920,10 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                               handleTabChange("Reports");
                               setReportInitialMode("country");
                             }}
-                            className={`relative flex w-full h-14 items-center justify-center gap-2.5 px-4 text-[15px] font-semibold transition-all duration-200 border-r border-blue-200/40 dark:border-blue-400/15 ${
+                            className={`relative flex w-full h-14 items-center justify-center gap-2.5 px-4 text-[15px] font-semibold transition-all duration-200 border-r border-blue-200/40  ${
                               activeTab === "Reports"
-                                ? "text-blue-600 dark:text-blue-400"
-                                : "text-slate-700 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                                ? "text-blue-600 "
+                                : "text-slate-700 hover:text-blue-600  "
                             }`}
                           >
                             <tab.icon
@@ -932,7 +932,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                               className={`transition-all duration-200 ${
                                 activeTab === "Reports"
                                   ? "text-blue-500 drop-shadow-[0_0_7px_rgba(59,130,246,0.7)]"
-                                  : "text-slate-400 dark:text-slate-500"
+                                  : "text-slate-400 "
                               }`}
                             />
 
@@ -943,7 +943,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                               className={`transition-all duration-200 ${
                                 activeTab === "Reports"
                                   ? "text-blue-500"
-                                  : "text-blue-500/80 group-hover:text-blue-500 dark:text-blue-400/80 dark:group-hover:text-blue-400"
+                                  : "text-blue-500/80 group-hover:text-blue-500  "
                               }`}
                             />
 
@@ -952,9 +952,9 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                             )}
                           </button>
 
-                          <div className="invisible absolute left-1/2 top-[calc(100%+8px)] z-50 w-[260px] -translate-x-1/2 translate-y-1 rounded-xl border border-blue-300/40 bg-white p-2 opacity-0 shadow-[0_20px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 dark:border-blue-400/25 dark:bg-slate-900 dark:shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+                          <div className="invisible absolute left-1/2 top-[calc(100%+8px)] z-50 w-[260px] -translate-x-1/2 translate-y-1 rounded-xl border border-blue-300/40 bg-white p-2 opacity-0 shadow-[0_20px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100   ">
                             <div className="px-3 pb-2 pt-1">
-                              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+                              <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-slate-400 ">
                                 Explore reports by
                               </p>
                             </div>
@@ -966,8 +966,8 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                               }}
                               className={`flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-all ${
                                 reportInitialMode === "country"
-                                  ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                                  : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                                  ? "bg-blue-500/10 text-blue-600  "
+                                  : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600  "
                               }`}
                             >
                               Countries
@@ -980,8 +980,8 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                               }}
                               className={`mt-1 flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-all ${
                                 reportInitialMode === "isp"
-                                  ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                                  : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+                                  ? "bg-blue-500/10 text-blue-600  "
+                                  : "text-slate-600 hover:bg-blue-500/5 hover:text-blue-600  "
                               }`}
                             >
                               ISPs
@@ -995,10 +995,10 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                         key={tab.id}
 
                         onClick={() => handleTabChange(tab.id)}
-                        className={`relative flex h-14 flex-1 items-center justify-center gap-2.5 whitespace-nowrap px-4 text-[15px] font-semibold font-sans transition-all duration-200 border-r border-blue-200/40 dark:border-blue-400/15 last:border-r-0 ${
+                        className={`relative flex h-14 flex-1 items-center justify-center gap-2.5 whitespace-nowrap px-4 text-[15px] font-semibold font-sans transition-all duration-200 border-r border-blue-200/40  last:border-r-0 ${
                           activeTab === tab.id
-                            ? "text-blue-600 bg-blue-500/5 dark:text-blue-400"
-                            : "text-slate-700 hover:text-blue-600 hover:bg-blue-500/5 dark:text-slate-300 dark:hover:text-blue-400"
+                            ? "text-blue-600 bg-blue-500/5 "
+                            : "text-slate-700 hover:text-blue-600 hover:bg-blue-500/5  "
                         }`}
                       >
                         <tab.icon
@@ -1006,7 +1006,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                           className={
                             activeTab === tab.id
                               ? "text-blue-600"
-                              : "text-slate-800 dark:text-slate-400"
+                              : "text-slate-800 "
                           }
                         />
                         {tab.id}
@@ -1021,7 +1021,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                 <button
                   // onClick={() => setSelectedPcapId(null)}
                   onClick={() => handleCardClick(selectedFile.pcap_id, true)}
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-r-2xl border-l border-blue-200/40 bg-rose-500/5 text-rose-500 transition-all hover:bg-rose-500 hover:text-white dark:border-blue-400/15"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-r-2xl border-l border-blue-200/40 bg-rose-500/5 text-rose-500 transition-all hover:bg-rose-500 hover:text-white "
                 >
                   <X
                     size={20}
@@ -1032,9 +1032,9 @@ export default function PcapClientView({ setId, initialResponse, session }) {
 
               <div className="max-h-[calc(100vh-190px)] overflow-y-auto custom-scrollbar pb-6">
                 <div className="flex flex-col">
-                  <div className="mx-6 mt-4 mb-2 rounded-xl border border-blue-200/60 bg-slate-50 px-6 py-4 shadow-sm dark:border-blue-400/15 dark:bg-slate-900">
+                  <div className="mx-6 mt-4 mb-2 rounded-xl border border-blue-200/60 bg-slate-50 px-6 py-4 shadow-sm  ">
                     <div className="flex flex-col gap-1">
-                      <span className="font-sans text-[11px] font-semibold  tracking-[0.16em] text-blue-600/70 dark:text-blue-400/70">
+                      <span className="font-sans text-[11px] font-semibold  tracking-[0.16em] text-blue-600/70 ">
                         PCAP Filename
                       </span>
                       <span

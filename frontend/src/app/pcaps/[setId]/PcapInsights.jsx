@@ -25,137 +25,129 @@ const ITEMS_PER_PAGE = 5;
 const ACCENTS = {
   amber: {
     main: "#f59e0b",
-    dark: "#b45309",
-    text: "text-amber-600 dark:text-amber-400",
-    header: "bg-amber-500/[0.10] dark:bg-amber-500/[0.12]",
-    iconBg: "bg-amber-100 dark:bg-amber-500/15",
-    iconBorder: "border-amber-300 dark:border-amber-500/40",
-    border: "border-amber-200 dark:border-amber-500/30",
-    value: "text-amber-600 dark:text-amber-400",
-    hover: "hover:bg-amber-500/[0.045] dark:hover:bg-amber-500/[0.08]",
+    text: "text-amber-600 ",
+    header: "bg-amber-500/[0.10] ",
+    iconBg: "bg-amber-100 ",
+    iconBorder: "border-amber-300 ",
+    border: "border-amber-200 ",
+    value: "text-amber-600 ",
+    hover: "hover:bg-amber-500/[0.045] ",
     active:
       "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/25",
     activeSoft:
-      "bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30",
+      "bg-amber-50 text-amber-700 border-amber-300   ",
     dot: "bg-amber-500",
   },
 
   cyan: {
     main: "#06b6d4",
-    dark: "#0e7490",
-    text: "text-cyan-600 dark:text-cyan-400",
-    header: "bg-cyan-500/[0.10] dark:bg-cyan-500/[0.12]",
-    iconBg: "bg-cyan-100 dark:bg-cyan-500/15",
-    iconBorder: "border-cyan-300 dark:border-cyan-500/40",
-    border: "border-cyan-200 dark:border-cyan-500/30",
-    value: "text-cyan-600 dark:text-cyan-400",
-    hover: "hover:bg-cyan-500/[0.045] dark:hover:bg-cyan-500/[0.08]",
+    text: "text-cyan-600 ",
+    header: "bg-cyan-500/[0.10] ",
+    iconBg: "bg-cyan-100 ",
+    iconBorder: "border-cyan-300 ",
+    border: "border-cyan-200 ",
+    value: "text-cyan-600 ",
+    hover: "hover:bg-cyan-500/[0.045] ",
     active:
       "bg-cyan-500 text-white border-cyan-500 shadow-md shadow-cyan-500/25",
     activeSoft:
-      "bg-cyan-50 text-cyan-700 border-cyan-300 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/30",
+      "bg-cyan-50 text-cyan-700 border-cyan-300   ",
     dot: "bg-cyan-500",
   },
 
   violet: {
     main: "#8b5cf6",
-    dark: "#6d28d9",
-    text: "text-violet-600 dark:text-violet-400",
-    header: "bg-violet-500/[0.10] dark:bg-violet-500/[0.12]",
-    iconBg: "bg-violet-100 dark:bg-violet-500/15",
-    iconBorder: "border-violet-300 dark:border-violet-500/40",
-    border: "border-violet-200 dark:border-violet-500/30",
-    value: "text-violet-600 dark:text-violet-400",
-    hover: "hover:bg-violet-500/[0.045] dark:hover:bg-violet-500/[0.08]",
+    text: "text-violet-600 ",
+    header: "bg-violet-500/[0.10] ",
+    iconBg: "bg-violet-100 ",
+    iconBorder: "border-violet-300 ",
+    border: "border-violet-200 ",
+    value: "text-violet-600 ",
+    hover: "hover:bg-violet-500/[0.045] ",
     active:
       "bg-violet-500 text-white border-violet-500 shadow-md shadow-violet-500/25",
     activeSoft:
-      "bg-violet-50 text-violet-700 border-violet-300 dark:bg-violet-500/10 dark:text-violet-300 dark:border-violet-500/30",
+      "bg-violet-50 text-violet-700 border-violet-300   ",
     dot: "bg-violet-500",
   },
 
   rose: {
     main: "#f43f5e",
-    dark: "#be123c",
-    text: "text-rose-600 dark:text-rose-400",
-    header: "bg-rose-500/[0.10] dark:bg-rose-500/[0.12]",
-    iconBg: "bg-rose-100 dark:bg-rose-500/15",
-    iconBorder: "border-rose-300 dark:border-rose-500/40",
-    border: "border-rose-200 dark:border-rose-500/30",
-    value: "text-rose-600 dark:text-rose-400",
-    hover: "hover:bg-rose-500/[0.045] dark:hover:bg-rose-500/[0.08]",
+    text: "text-rose-600 ",
+    header: "bg-rose-500/[0.10] ",
+    iconBg: "bg-rose-100 ",
+    iconBorder: "border-rose-300 ",
+    border: "border-rose-200 ",
+    value: "text-rose-600 ",
+    hover: "hover:bg-rose-500/[0.045] ",
     active:
       "bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/25",
     activeSoft:
-      "bg-rose-50 text-rose-700 border-rose-300 dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/30",
+      "bg-rose-50 text-rose-700 border-rose-300   ",
     dot: "bg-rose-500",
   },
 
   emerald: {
     main: "#10b981",
-    dark: "#047857",
-    text: "text-emerald-600 dark:text-emerald-400",
-    header: "bg-emerald-500/[0.10] dark:bg-emerald-500/[0.12]",
-    iconBg: "bg-emerald-100 dark:bg-emerald-500/15",
-    iconBorder: "border-emerald-300 dark:border-emerald-500/40",
-    border: "border-emerald-200 dark:border-emerald-500/30",
-    value: "text-emerald-600 dark:text-emerald-400",
-    hover: "hover:bg-emerald-500/[0.045] dark:hover:bg-emerald-500/[0.08]",
+    text: "text-emerald-600 ",
+    header: "bg-emerald-500/[0.10] ",
+    iconBg: "bg-emerald-100 ",
+    iconBorder: "border-emerald-300 ",
+    border: "border-emerald-200 ",
+    value: "text-emerald-600 ",
+    hover: "hover:bg-emerald-500/[0.045] ",
     active:
       "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/25",
     activeSoft:
-      "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30",
+      "bg-emerald-50 text-emerald-700 border-emerald-300   ",
     dot: "bg-emerald-500",
   },
 
   orange: {
     main: "#f97316",
-    dark: "#c2410c",
-    text: "text-orange-600 dark:text-orange-400",
-    header: "bg-orange-500/[0.10] dark:bg-orange-500/[0.12]",
-    iconBg: "bg-orange-100 dark:bg-orange-500/15",
-    iconBorder: "border-orange-300 dark:border-orange-500/40",
-    border: "border-orange-200 dark:border-orange-500/30",
-    value: "text-orange-600 dark:text-orange-400",
-    hover: "hover:bg-orange-500/[0.045] dark:hover:bg-orange-500/[0.08]",
+    text: "text-orange-600 ",
+    header: "bg-orange-500/[0.10] ",
+    iconBg: "bg-orange-100 ",
+    iconBorder: "border-orange-300 ",
+    border: "border-orange-200 ",
+    value: "text-orange-600 ",
+    hover: "hover:bg-orange-500/[0.045] ",
     active:
       "bg-orange-500 text-white border-orange-500 shadow-md shadow-orange-500/25",
     activeSoft:
-      "bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-500/10 dark:text-orange-300 dark:border-orange-500/30",
+      "bg-orange-50 text-orange-700 border-orange-300   ",
     dot: "bg-orange-500",
   },
 
   indigo: {
     main: "#6366f1",
-    dark: "#4338ca",
-    text: "text-indigo-600 dark:text-indigo-400",
-    header: "bg-indigo-500/[0.10] dark:bg-indigo-500/[0.12]",
-    iconBg: "bg-indigo-100 dark:bg-indigo-500/15",
-    iconBorder: "border-indigo-300 dark:border-indigo-500/40",
-    border: "border-indigo-200 dark:border-indigo-500/30",
-    value: "text-indigo-600 dark:text-indigo-400",
-    hover: "hover:bg-indigo-500/[0.045] dark:hover:bg-indigo-500/[0.08]",
+    text: "text-indigo-600 ",
+    header: "bg-indigo-500/[0.10] ",
+    iconBg: "bg-indigo-100 ",
+    iconBorder: "border-indigo-300 ",
+    border: "border-indigo-200 ",
+    value: "text-indigo-600 ",
+    hover: "hover:bg-indigo-500/[0.045] ",
     active:
       "bg-indigo-500 text-white border-indigo-500 shadow-md shadow-indigo-500/25",
     activeSoft:
-      "bg-indigo-50 text-indigo-700 border-indigo-300 dark:bg-indigo-500/10 dark:text-indigo-300 dark:border-indigo-500/30",
+      "bg-indigo-50 text-indigo-700 border-indigo-300   ",
     dot: "bg-indigo-500",
   },
 
   slate: {
     main: "#64748b",
-    dark: "#334155",
-    text: "text-slate-600 dark:text-slate-300",
-    header: "bg-slate-500/[0.08] dark:bg-slate-500/[0.12]",
-    iconBg: "bg-slate-100 dark:bg-slate-700/50",
-    iconBorder: "border-slate-300 dark:border-slate-600",
-    border: "border-slate-200 dark:border-slate-700",
-    value: "text-slate-700 dark:text-slate-200",
-    hover: "hover:bg-slate-500/[0.04] dark:hover:bg-slate-500/[0.07]",
+    text: "text-slate-600 ",
+    header: "bg-slate-500/[0.08] ",
+    iconBg: "bg-slate-100 ",
+    iconBorder: "border-slate-300 ",
+    border: "border-slate-200 ",
+    value: "text-slate-700 ",
+    hover: "hover:bg-slate-500/[0.04] ",
     active:
       "bg-slate-700 text-white border-slate-700 shadow-md shadow-slate-500/20",
     activeSoft:
-      "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700/40 dark:text-slate-200 dark:border-slate-600",
+      "bg-slate-100 text-slate-700 border-slate-300   ",
     dot: "bg-slate-500",
   },
 };
@@ -251,13 +243,13 @@ const PaginatedTable = ({
   );
 
   return (
-    <div className="flex flex-col h-full group bg-card border border-slate-200/80 dark:border-slate-700/70 rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg">
+    <div className="flex flex-col h-full group bg-card border border-slate-200/80  rounded-xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-lg">
       {/* ======================================================
           CARD HEADER
           ====================================================== */}
 
       <div
-        className={`flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200/80 dark:border-slate-700/60 ${theme.header} flex-wrap`}
+        className={`flex items-center justify-between gap-4 px-6 py-4 border-b border-slate-200/80  ${theme.header} flex-wrap`}
       >
         <div className="flex items-center gap-3 min-w-0">
           {/* Section icon */}
@@ -296,7 +288,7 @@ const PaginatedTable = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={searchPlaceholder}
-                className="w-56 pl-9 pr-3 py-2 text-xs rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 transition-all"
+                className="w-56 pl-9 pr-3 py-2 text-xs rounded-full border border-slate-200  bg-white  text-foreground placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400/20 focus:border-slate-400 transition-all"
               />
             </div>
           )}
@@ -336,7 +328,7 @@ const PaginatedTable = ({
         >
           <table className="w-full text-left">
             <thead
-              className={`bg-slate-50/80 dark:bg-slate-900/30 ${
+              className={`bg-slate-50/80  ${
                 scrollable ? "sticky top-0 z-10 bg-card" : ""
               }`}
             >
@@ -344,7 +336,7 @@ const PaginatedTable = ({
                 {headers.map((h, i) => (
                   <th
                     key={i}
-                    className={`px-8 py-4 text-[13px] font-semibold text-slate-700 dark:text-slate-300 tracking-[0.01em] ${
+                    className={`px-8 py-4 text-[13px] font-semibold text-slate-700  tracking-[0.01em] ${
                       h.className || ""
                     }`}
                   >
@@ -359,7 +351,7 @@ const PaginatedTable = ({
                 paginatedData.map((item, idx) => (
                   <tr
                     key={idx}
-                    className={`border-t border-slate-100 dark:border-slate-800/70 ${theme.hover} transition-colors duration-200`}
+                    className={`border-t border-slate-100  ${theme.hover} transition-colors duration-200`}
                   >
                     {renderRow(item, idx, startIndex + idx)}
                   </tr>
@@ -385,8 +377,8 @@ const PaginatedTable = ({
             ==================================================== */}
 
         {!scrollable && filteredData.length > 0 && (
-          <div className="mt-auto px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/20 flex items-center justify-between gap-3 flex-wrap">
-            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="mt-auto px-4 py-3 border-t border-slate-100  bg-slate-50/40  flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-xs font-medium text-slate-500 ">
               Page{" "}
               <span className="text-foreground font-semibold">
                 {currentPage}
@@ -403,7 +395,7 @@ const PaginatedTable = ({
                   type="button"
                   onClick={() => setCurrentPage(1)}
                   disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center text-xs border border-slate-200 dark:border-slate-700 bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
+                  className="w-8 h-8 flex items-center justify-center text-xs border border-slate-200  bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
                 >
                   «
                 </button>
@@ -414,7 +406,7 @@ const PaginatedTable = ({
                     setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
                   disabled={currentPage === 1}
-                  className="w-8 h-8 flex items-center justify-center text-sm border border-slate-200 dark:border-slate-700 bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
+                  className="w-8 h-8 flex items-center justify-center text-sm border border-slate-200  bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
                 >
                   ‹
                 </button>
@@ -434,7 +426,7 @@ const PaginatedTable = ({
                     className={`w-8 h-8 flex items-center justify-center text-[11px] font-semibold transition-all border rounded-md ${
                       currentPage === p
                         ? theme.active
-                        : `bg-card text-slate-500 border-slate-200 dark:border-slate-700 ${theme.hover}`
+                        : `bg-card text-slate-500 border-slate-200  ${theme.hover}`
                     }`}
                   >
                     {p}
@@ -447,7 +439,7 @@ const PaginatedTable = ({
                     setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 flex items-center justify-center text-sm border border-slate-200 dark:border-slate-700 bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
+                  className="w-8 h-8 flex items-center justify-center text-sm border border-slate-200  bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
                 >
                   ›
                 </button>
@@ -456,7 +448,7 @@ const PaginatedTable = ({
                   type="button"
                   onClick={() => setCurrentPage(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="w-8 h-8 flex items-center justify-center text-xs border border-slate-200 dark:border-slate-700 bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
+                  className="w-8 h-8 flex items-center justify-center text-xs border border-slate-200  bg-card text-slate-500 rounded-md transition-all hover:border-slate-400 hover:text-foreground disabled:opacity-20"
                 >
                   »
                 </button>
@@ -486,7 +478,7 @@ const MetricToggle = ({ value, onChange, id }) => {
   ];
 
   return (
-    <div className="inline-flex items-center gap-1 rounded-full bg-slate-200/80 dark:bg-slate-700/60 p-1 border border-slate-200 dark:border-slate-700">
+    <div className="inline-flex items-center gap-1 rounded-full bg-slate-200/80  p-1 border border-slate-200 ">
       {options.map((opt) => (
         <button
           key={opt.key}
@@ -495,13 +487,13 @@ const MetricToggle = ({ value, onChange, id }) => {
           className={`relative px-3.5 py-1.5 text-[11px] font-semibold rounded-full transition-colors duration-200 cursor-pointer ${
             value === opt.key
               ? "text-white"
-              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              : "text-slate-500  hover:text-slate-800 "
           }`}
         >
           {value === opt.key && (
             <motion.span
               layoutId={`metric-toggle-bg-${id}`}
-              className="absolute inset-0 rounded-full bg-slate-700 dark:bg-slate-200 shadow-sm"
+              className="absolute inset-0 rounded-full bg-slate-700  shadow-sm"
               transition={{
                 type: "spring",
                 stiffness: 450,
@@ -715,13 +707,13 @@ const RecordTypeBadge = ({ recordType, index }) => {
       <div
         id={tooltipId}
         role="tooltip"
-        className={`absolute z-[100] top-1/2 -translate-y-1/2 right-full mr-3 w-72 origin-right rounded-xl border shadow-xl bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 transition-all duration-200 ${
+        className={`absolute z-[100] top-1/2 -translate-y-1/2 right-full mr-3 w-72 origin-right rounded-xl border shadow-xl bg-white  border-slate-200  transition-all duration-200 ${
           open
             ? "opacity-100 translate-x-0 scale-100 pointer-events-auto"
             : "opacity-0 translate-x-2 scale-95 pointer-events-none"
         }`}
       >
-        <span className="absolute top-1/2 -right-[7px] -translate-y-1/2 w-3 h-3 rotate-45 bg-white dark:bg-slate-800 border-r border-t border-slate-200 dark:border-slate-700" />
+        <span className="absolute top-1/2 -right-[7px] -translate-y-1/2 w-3 h-3 rotate-45 bg-white  border-r border-t border-slate-200 " />
         <div className="relative px-4 py-3">
           <div className="flex items-baseline gap-1.5 mb-1.5">
             <span
@@ -734,13 +726,13 @@ const RecordTypeBadge = ({ recordType, index }) => {
             </span>
 
             {rec?.num !== undefined && (
-              <span className="text-[12px] font-medium text-slate-400 dark:text-slate-500">
+              <span className="text-[12px] font-medium text-slate-400 ">
                 - Type {rec.num}
               </span>
             )}
           </div>
 
-          <p className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="text-[12px] leading-relaxed text-slate-600 ">
             {rec?.desc || "No description available for this record type."}
           </p>
         </div>
@@ -824,7 +816,7 @@ export default function PcapInsights({ data, onIpClick }) {
             ]}
             renderRow={(c, idx, globalIdx) => (
               <>
-                <td className="px-8 py-4 text-slate-400 dark:text-slate-500 text-sm">
+                <td className="px-8 py-4 text-slate-400  text-sm">
                   {globalIdx + 1}
                 </td>
 
@@ -836,13 +828,13 @@ export default function PcapInsights({ data, onIpClick }) {
                 </td>
 
                 <td className="px-8 py-4 text-center">
-                  <span className="text-[14px] font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-[14px] font-medium text-slate-700 ">
                     {c.ip_count}
                   </span>
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-amber-600 dark:text-amber-400">
+                  <span className="text-[14px] font-bold text-amber-600 ">
                     {c.packets?.toLocaleString()}
                   </span>
                 </td>
@@ -877,7 +869,7 @@ export default function PcapInsights({ data, onIpClick }) {
             ]}
             renderRow={(c, idx, globalIdx) => (
               <>
-                <td className="px-8 py-4 text-slate-400 dark:text-slate-500 text-sm">
+                <td className="px-8 py-4 text-slate-400  text-sm">
                   {globalIdx + 1}
                 </td>
 
@@ -889,13 +881,13 @@ export default function PcapInsights({ data, onIpClick }) {
                 </td>
 
                 <td className="px-8 py-4 text-center">
-                  <span className="text-[14px] font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-[14px] font-medium text-slate-700 ">
                     {c.ip_count}
                   </span>
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-cyan-600 dark:text-cyan-400">
+                  <span className="text-[14px] font-bold text-cyan-600 ">
                     {c.packets?.toLocaleString()}
                   </span>
                 </td>
@@ -908,7 +900,7 @@ export default function PcapInsights({ data, onIpClick }) {
             ISPs / PROTOCOLS
             ====================================================== */}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 ">
           <PaginatedTable
             data={top_isps}
             title="Top ISPs"
@@ -932,7 +924,7 @@ export default function PcapInsights({ data, onIpClick }) {
             ]}
             renderRow={(c, idx, globalIdx) => (
               <>
-                <td className="px-8 py-4 text-slate-400 dark:text-slate-500 text-sm">
+                <td className="px-8 py-4 text-slate-400  text-sm">
                   {globalIdx + 1}
                 </td>
 
@@ -944,13 +936,13 @@ export default function PcapInsights({ data, onIpClick }) {
                 </td>
 
                 <td className="px-8 py-4 text-center">
-                  <span className="text-[14px] font-medium text-slate-700 dark:text-slate-300">
+                  <span className="text-[14px] font-medium text-slate-700 ">
                     {c.ip_count}
                   </span>
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-violet-600 dark:text-violet-400">
+                  <span className="text-[14px] font-bold text-violet-600 ">
                     {c.packets?.toLocaleString()}
                   </span>
                 </td>
@@ -978,7 +970,7 @@ export default function PcapInsights({ data, onIpClick }) {
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-rose-600 dark:text-rose-400">
+                  <span className="text-[14px] font-bold text-rose-600 ">
                     {proto.packet_count?.toLocaleString()}
                   </span>
                 </td>
@@ -991,7 +983,7 @@ export default function PcapInsights({ data, onIpClick }) {
             INTERNAL / EXTERNAL IPS
             ====================================================== */}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 ">
           {/* INTERNAL IPS */}
 
           <PaginatedTable
@@ -1018,14 +1010,14 @@ export default function PcapInsights({ data, onIpClick }) {
             renderRow={(ip) => (
               <>
                 <td
-                  className="px-8 py-4 text-foreground cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors text-[14px] font-medium"
+                  className="px-8 py-4 text-foreground cursor-pointer hover:text-emerald-600  transition-colors text-[14px] font-medium"
                   onClick={() => onIpClick && onIpClick(ip.ip)}
                 >
                   {ip.ip}
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="text-[14px] font-bold text-emerald-600 ">
                     {(internalMetric === "connections"
                       ? ip.connections
                       : ip.packet_count
@@ -1064,18 +1056,18 @@ export default function PcapInsights({ data, onIpClick }) {
             renderRow={(ip) => (
               <>
                 <td
-                  className="px-8 py-4 text-foreground cursor-pointer hover:text-orange-600 dark:hover:text-orange-400 transition-colors text-[14px] font-medium"
+                  className="px-8 py-4 text-foreground cursor-pointer hover:text-orange-600  transition-colors text-[14px] font-medium"
                   onClick={() => onIpClick && onIpClick(ip.ip)}
                 >
                   {ip.ip}
                 </td>
 
-                <td className="px-8 py-4 text-[14px] text-slate-600 dark:text-slate-300">
+                <td className="px-8 py-4 text-[14px] text-slate-600 ">
                   {ip.isp || "Unknown"}
                 </td>
 
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-orange-600 dark:text-orange-400">
+                  <span className="text-[14px] font-bold text-orange-600 ">
                     {(externalMetric === "connections"
                       ? ip.connections
                       : ip.packet_count
@@ -1091,7 +1083,7 @@ export default function PcapInsights({ data, onIpClick }) {
             DNS / PORTS
             ====================================================== */}
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 ">
           <PaginatedTable
             data={dns_queries}
             title="DNS Queries"
@@ -1125,7 +1117,7 @@ export default function PcapInsights({ data, onIpClick }) {
                   />
                 </td>
 
-                <td className="px-8 py-4 text-[14px] font-semibold text-slate-700 dark:text-slate-300">
+                <td className="px-8 py-4 text-[14px] font-semibold text-slate-700 ">
                   {dns.count}
                 </td>
               </>
@@ -1157,12 +1149,12 @@ export default function PcapInsights({ data, onIpClick }) {
             renderRow={(p) => (
               <>
                 <td className="px-8 py-4">
-                  <span className="text-[14px] font-bold text-amber-600 dark:text-amber-400">
+                  <span className="text-[14px] font-bold text-amber-600 ">
                     {p.port}
                   </span>
                 </td>
 
-                <td className="px-8 py-4 text-[14px] text-slate-700 dark:text-slate-300">
+                <td className="px-8 py-4 text-[14px] text-slate-700 ">
                   {p.protocol}
                 </td>
 
@@ -1178,7 +1170,7 @@ export default function PcapInsights({ data, onIpClick }) {
             URLS / FTP
             ====================================================== */}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 pt-8 border-t border-slate-200 ">
           {/* URLS */}
 
           <PaginatedTable
@@ -1204,7 +1196,7 @@ export default function PcapInsights({ data, onIpClick }) {
                   {url.label}
                 </td>
 
-                <td className="px-8 py-4 text-[14px] font-bold text-cyan-600 dark:text-cyan-400">
+                <td className="px-8 py-4 text-[14px] font-bold text-cyan-600 ">
                   {url.value}
                 </td>
               </>
@@ -1213,12 +1205,12 @@ export default function PcapInsights({ data, onIpClick }) {
 
           {/* FTP */}
 
-          <div className="bg-card border border-slate-200/80 dark:border-slate-700/70 rounded-xl overflow-hidden shadow-sm">
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-500/[0.08] dark:bg-slate-500/[0.12] flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700/60 border border-slate-300 dark:border-slate-600 flex items-center justify-center">
+          <div className="bg-card border border-slate-200/80  rounded-xl overflow-hidden shadow-sm">
+            <div className="px-6 py-4 border-b border-slate-200  bg-slate-500/[0.08]  flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-slate-100  border border-slate-300  flex items-center justify-center">
                 <FileArchive
                   size={17}
-                  className="text-slate-600 dark:text-slate-300"
+                  className="text-slate-600 "
                 />
               </div>
 
@@ -1292,7 +1284,7 @@ export default function PcapInsights({ data, onIpClick }) {
                 </div>
               ) : (
                 <div className="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-slate-100  border border-slate-200  flex items-center justify-center">
                     <FileArchive size={18} className="text-slate-500" />
                   </div>
 
@@ -1307,7 +1299,7 @@ export default function PcapInsights({ data, onIpClick }) {
             EXTRACTED FILES
             ====================================================== */}
 
-        <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
+        <div className="mt-8 pt-8 border-t border-slate-200 ">
           <PaginatedTable
             data={files_and_payloads}
             title="Extracted Files"
@@ -1337,12 +1329,12 @@ export default function PcapInsights({ data, onIpClick }) {
                   {file.filename}
                 </td>
 
-                <td className="px-8 py-4 text-[14px] text-slate-600 dark:text-slate-300">
+                <td className="px-8 py-4 text-[14px] text-slate-600 ">
                   {file.type}
                 </td>
 
                 <td className="px-8 py-4 text-center">
-                  <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-1 rounded-md border border-emerald-500/25 text-[11px] font-bold">
+                  <span className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-600  px-2.5 py-1 rounded-md border border-emerald-500/25 text-[11px] font-bold">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
 
                     {file.protocol}
@@ -1361,13 +1353,13 @@ export default function PcapInsights({ data, onIpClick }) {
             USER AGENTS
             ====================================================== */}
 
-        <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-800">
-          <div className="bg-card border border-slate-200/80 dark:border-slate-700/70 rounded-xl overflow-hidden shadow-sm">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-violet-500/[0.10] dark:bg-violet-500/[0.12]">
-              <div className="w-9 h-9 rounded-lg bg-violet-100 dark:bg-violet-500/15 border border-violet-300 dark:border-violet-500/40 flex items-center justify-center">
+        <div className="mt-8 pt-8 border-t border-slate-200 ">
+          <div className="bg-card border border-slate-200/80  rounded-xl overflow-hidden shadow-sm">
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200  bg-violet-500/[0.10] ">
+              <div className="w-9 h-9 rounded-lg bg-violet-100  border border-violet-300  flex items-center justify-center">
                 <Users
                   size={17}
-                  className="text-violet-600 dark:text-violet-400"
+                  className="text-violet-600 "
                 />
               </div>
 
@@ -1381,14 +1373,14 @@ export default function PcapInsights({ data, onIpClick }) {
                 user_agents.map((ua, idx) => (
                   <div
                     key={idx}
-                    className="bg-white dark:bg-card border border-slate-200/80 dark:border-slate-700/60 p-4 rounded-xl shadow-sm hover:border-violet-400 dark:hover:border-violet-500/40 hover:shadow-md transition-all duration-200 group"
+                    className="bg-white  border border-slate-200/80  p-4 rounded-xl shadow-sm hover:border-violet-400  hover:shadow-md transition-all duration-200 group"
                   >
-                    <div className="text-violet-600 dark:text-violet-400 mb-1.5 flex items-center gap-2 text-[12px] font-bold">
+                    <div className="text-violet-600  mb-1.5 flex items-center gap-2 text-[12px] font-bold">
                       <div className="w-1.5 h-1.5 rounded-full bg-violet-500 shadow-[0_0_7px_rgba(139,92,246,0.7)]" />
                       Agent {idx + 1}
                     </div>
 
-                    <div className="text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 break-all line-clamp-2 group-hover:line-clamp-none transition-all">
+                    <div className="text-[13px] leading-relaxed text-slate-700  break-all line-clamp-2 group-hover:line-clamp-none transition-all">
                       {ua.user_agent}
                     </div>
                   </div>

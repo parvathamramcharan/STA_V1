@@ -338,7 +338,7 @@ export default function ReportsClientView({ session }) {
                     whileHover={{ y: -8, scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 140, damping: 20 }}
                     key={file.pcap_id}
-                    className="bg-card border-2 border-slate-200/60 dark:border-slate-800 p-5 rounded-none hover:border-blue-600 hover:shadow-2xl hover:shadow-blue-500/20 hover:ring-1 hover:ring-blue-600 transition-all group flex flex-col justify-between min-h-[180px]"
+                    className="bg-card border-2 border-slate-200/60  p-5 rounded-none hover:border-blue-600 hover:shadow-2xl hover:shadow-blue-500/20 hover:ring-1 hover:ring-blue-600 transition-all group flex flex-col justify-between min-h-[180px]"
                   >
                     <div className="flex flex-col gap-4">
                       <div className="flex items-start">

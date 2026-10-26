@@ -267,7 +267,7 @@ export function IPSearch({ initialIp, onScanComplete }) {
                   </div>
                   <div className="space-y-6">
                     <div>
-                      <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                      <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                         City / Region
                       </div>
                       <div className="text-[14px] break-words">
@@ -275,7 +275,7 @@ export function IPSearch({ initialIp, onScanComplete }) {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                      <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                         Country
                       </div>
                       <div className="text-[14px] break-words">
@@ -283,7 +283,7 @@ export function IPSearch({ initialIp, onScanComplete }) {
                       </div>
                     </div>
                     <div>
-                      <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                      <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                         Service Provider
                       </div>
                       <div className="text-[14px] break-words">
@@ -292,7 +292,7 @@ export function IPSearch({ initialIp, onScanComplete }) {
                     </div>
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-theme">
                       <div>
-                        <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                        <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                           Latitude
                         </div>
                         <div className="text-[14px] break-words">
@@ -302,7 +302,7 @@ export function IPSearch({ initialIp, onScanComplete }) {
                         </div>
                       </div>
                       <div>
-                        <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                        <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                           Longitude
                         </div>
                         <div className="text-[14px] break-words">
@@ -501,13 +501,13 @@ function DetailRow({ icon: Icon, label, value, subValue, color }) {
     >
       <div className="flex items-center gap-4">
         <Icon size={30} className="shrink-0" />
-        <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300">
+        <div className="text-[16px] font-bold text-slate-700 ">
           {label}
         </div>
       </div>
 
       <div className="min-w-0">
-        <div className="text-[14px] dark:text-slate-400 break-all mt-1">
+        <div className="text-[14px]  break-all mt-1">
           {value || "N/A"}
         </div>
         {subValue && (
@@ -542,7 +542,7 @@ function WhoisSection({ title, data }) {
 function WhoisField({ label, value }) {
   return (
     <div>
-      <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+      <div className="text-[16px] font-bold text-slate-700  mb-0.5">
         {label}
       </div>
 

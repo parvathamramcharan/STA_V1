@@ -81,7 +81,7 @@ function StatTable({ title, data = [], labelKey, headerLabel }) {
   };
 
   return (
-    <div className="rounded-xl border border-theme overflow-hidden bg-white dark:bg-slate-900/50">
+    <div className="rounded-xl border border-theme overflow-hidden bg-white ">
       {/* header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-theme">
         <div className="flex items-center gap-2">
@@ -89,13 +89,13 @@ function StatTable({ title, data = [], labelKey, headerLabel }) {
             className="w-[3px] h-4 rounded-full"
             style={{ background: accent }}
           />
-          <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+          <h3 className="text-[13px] font-bold text-slate-800  tracking-tight">
             {title}
           </h3>
         </div>
 
         {/* pill toggle */}
-        <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+        <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-slate-100 ">
           {[
             ["packets", "Packets", PKT],
             ["connections", "Connections", CONN],
@@ -121,14 +121,14 @@ function StatTable({ title, data = [], labelKey, headerLabel }) {
       </div>
 
       {/* column headers */}
-      <div className="grid grid-cols-[28px_1fr_auto] gap-x-3 px-4 py-1.5 bg-slate-50 dark:bg-slate-800/40 border-b border-theme">
-        <span className="text-[10.5px] font-bold text-slate-800 dark:text-slate-200">
+      <div className="grid grid-cols-[28px_1fr_auto] gap-x-3 px-4 py-1.5 bg-slate-50  border-b border-theme">
+        <span className="text-[10.5px] font-bold text-slate-800 ">
           S.NO
         </span>
-        <span className="text-[10.5px] font-bold text-slate-800 dark:text-slate-200">
+        <span className="text-[10.5px] font-bold text-slate-800 ">
           {headerLabel}
         </span>
-        <span className="text-[10.5px] font-bold text-slate-800 dark:text-slate-200">
+        <span className="text-[10.5px] font-bold text-slate-800 ">
           {metric === "packets" ? "Packets" : "Connections"}
         </span>
       </div>
@@ -157,11 +157,11 @@ function StatTable({ title, data = [], labelKey, headerLabel }) {
                     style={{ background: accent }}
                   />
 
-                  <span className="relative z-10 text-[10.5px] font-bold tabular-nums text-slate-700 dark:text-slate-300">
+                  <span className="relative z-10 text-[10.5px] font-bold tabular-nums text-slate-700 ">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
 
-                  <span className="relative z-10 text-[12.5px] font-medium text-slate-700 dark:text-slate-300 truncate group-hover:translate-x-0.5 transition-transform duration-150">
+                  <span className="relative z-10 text-[12.5px] font-medium text-slate-700  truncate group-hover:translate-x-0.5 transition-transform duration-150">
                     {item[labelKey]}
                   </span>
 
@@ -175,7 +175,7 @@ function StatTable({ title, data = [], labelKey, headerLabel }) {
               );
             })
           ) : (
-            <div className="flex items-center justify-center py-10 text-[11.5px] text-slate-300 dark:text-slate-700">
+            <div className="flex items-center justify-center py-10 text-[11.5px] text-slate-300 ">
               Gathering records…
             </div>
           )}
@@ -209,7 +209,7 @@ function InfectedHostsTable({ hosts = [] }) {
   });
 
   return (
-    <div className="rounded-xl border border-theme overflow-hidden bg-white dark:bg-slate-900/50">
+    <div className="rounded-xl border border-theme overflow-hidden bg-white ">
       {/* header */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-theme">
         <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ function InfectedHostsTable({ hosts = [] }) {
             style={{ background: ROSE }}
           />
           <div className="flex items-center gap-2">
-            <h3 className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+            <h3 className="text-[13px] font-bold text-slate-800  tracking-tight">
               Affected Hosts
             </h3>
           </div>
@@ -226,11 +226,11 @@ function InfectedHostsTable({ hosts = [] }) {
         <div className="flex items-center gap-2.5">
           {total > 1 && (
             <span className="text-[11px] text-slate-400">
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
+              <span className="font-semibold text-slate-700 ">
                 {page}
               </span>
               {" / "}
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
+              <span className="font-semibold text-slate-700 ">
                 {total}
               </span>
             </span>
@@ -273,10 +273,10 @@ function InfectedHostsTable({ hosts = [] }) {
                   e.currentTarget.style.borderColor = "";
                 }}
               >
-                <span className="text-[10.5px] font-bold tabular-nums text-slate-700 dark:text-slate-300 w-5 shrink-0">
+                <span className="text-[10.5px] font-bold tabular-nums text-slate-700  w-5 shrink-0">
                   {String((page - 1) * PER_PAGE + idx + 1).padStart(2, "0")}
                 </span>
-                <span className="text-[11.5px] font-medium text-slate-600 dark:text-slate-400 truncate">
+                <span className="text-[11.5px] font-medium text-slate-600  truncate">
                   {ip}
                 </span>
               </motion.div>
