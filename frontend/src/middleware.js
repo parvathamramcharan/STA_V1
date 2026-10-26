@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  ACCESS_TOKEN_COOKIE,
-  REFRESH_TOKEN_COOKIE,
-} from "@/lib/authCookies";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
 import { verifyJwt } from "@/lib/jwt";
 
 export async function middleware(request) {

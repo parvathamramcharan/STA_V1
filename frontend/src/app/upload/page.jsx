@@ -75,18 +75,18 @@ function FileIcon({ name }) {
 
   if (isPcap)
     return (
-      <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(37,99,235,0.10)] text-[#2563eb] dark:bg-[rgba(59,130,246,0.13)] dark:text-[#3b82f6]">
+      <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(37,99,235,0.10)] text-[#2563eb]  ">
         <File size={14} />
       </span>
     );
   if (isPdf)
     return (
-      <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(220,38,38,0.09)] text-[#dc2626] dark:bg-[rgba(248,113,113,0.09)] dark:text-[#f87171]">
+      <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(220,38,38,0.09)] text-[#dc2626]  ">
         <FileText size={14} />
       </span>
     );
   return (
-    <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(75,107,154,0.10)] text-[#4b6b9a] dark:bg-[rgba(148,163,184,0.10)] dark:text-[#94a3b8]">
+    <span className="inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] shrink-0 bg-[rgba(75,107,154,0.10)] text-[#4b6b9a]  ">
       <File size={14} />
     </span>
   );
@@ -341,30 +341,22 @@ export default function UploadPage() {
     if (e.dataTransfer.files.length) uploadFiles(e.dataTransfer.files);
   };
 
-  /* ── shared class fragments ─────────────────────
-     Tailwind can't express CSS custom properties directly,
-     so light/dark pairs are inlined as arbitrary values with
-     a `dark:` variant. This assumes dark mode is toggled via
-     a `dark` class on a parent element (Tailwind's default
-     class strategy) — swap the variant selector in
-     tailwind.config.js if your app instead toggles
-     `data-theme="dark"`.
-  ── */
+  /* ── shared class fragments ───────────────────── */
   const border =
-    "border-[rgba(30,58,95,0.10)] dark:border-[rgba(59,130,246,0.13)]";
+    "border-[rgba(30,58,95,0.10)] ";
   const borderAcc =
-    "border-[rgba(37,99,235,0.22)] dark:border-[rgba(59,130,246,0.28)]";
-  const cardBg = "bg-white dark:bg-[#0f172a]";
-  const card2Bg = "bg-[#e8eef7] dark:bg-[#1e293b]";
-  const pageBg = "bg-[#f0f4f8] dark:bg-[#0a0f1e]";
-  const acc10 = "bg-[rgba(37,99,235,0.10)] dark:bg-[rgba(59,130,246,0.13)]";
-  const acc05 = "bg-[rgba(37,99,235,0.05)] dark:bg-[rgba(59,130,246,0.06)]";
-  const fg = "text-[#0f1f3d] dark:text-[#e2e8f0]";
-  const fgm = "text-[#4b6b9a] dark:text-[#94a3b8]";
-  const fgd = "text-[#a8bcd4] dark:text-[#1e3a5f]";
-  const accText = "text-[#2563eb] dark:text-[#3b82f6]";
+    "border-[rgba(37,99,235,0.22)] ";
+  const cardBg = "bg-white ";
+  const card2Bg = "bg-[#e8eef7] ";
+  const pageBg = "bg-[#f0f4f8] ";
+  const acc10 = "bg-[rgba(37,99,235,0.10)] ";
+  const acc05 = "bg-[rgba(37,99,235,0.05)] ";
+  const fg = "text-[#0f1f3d] ";
+  const fgm = "text-[#4b6b9a] ";
+  const fgd = "text-[#a8bcd4] ";
+  const accText = "text-[#2563eb] ";
   const shadowSm =
-    "shadow-[0_1px_3px_rgba(30,58,95,0.07),0_4px_16px_rgba(30,58,95,0.06)] dark:shadow-[0_1px_4px_rgba(0,0,0,0.3),0_4px_16px_rgba(0,0,0,0.25)]";
+    "shadow-[0_1px_3px_rgba(30,58,95,0.07),0_4px_16px_rgba(30,58,95,0.06)] ";
 
   return (
     <>
@@ -459,7 +451,7 @@ export default function UploadPage() {
                           tabIndex={0}
                           className={`inline-flex items-center justify-center w-[22px] h-[22px] border border-transparent rounded-[5px] bg-transparent opacity-35 group-hover:opacity-70 transition-all cursor-pointer ${fgm}
                           hover:!opacity-100 hover:text-[#dc2626] hover:border-[rgba(220,38,38,0.22)] hover:bg-[rgba(220,38,38,0.08)]
-                          dark:hover:text-[#f87171] dark:hover:border-[rgba(248,113,113,0.25)] dark:hover:bg-[rgba(248,113,113,0.08)]`}
+                            `}
                           title={`Delete ${b.name}`}
                           onClick={(e) => confirmDeleteBucket(b.name, e)}
                           onKeyDown={(e) => {
@@ -478,7 +470,7 @@ export default function UploadPage() {
 
             <div className={`flex gap-[7px] pt-3 border-t ${border}`}>
               <input
-                className={`flex-1 rounded-lg px-2.5 py-[7px] text-[0.9rem] transition-colors border ${border} ${pageBg} ${fg} placeholder:${fgd} focus:outline-none focus:border-[#2563eb] dark:focus:border-[#3b82f6]`}
+                className={`flex-1 rounded-lg px-2.5 py-[7px] text-[0.9rem] transition-colors border ${border} ${pageBg} ${fg} placeholder:${fgd} focus:outline-none focus:border-[#2563eb] `}
                 type="text"
                 placeholder="new-dataset-name"
                 value={newBucketName}
@@ -511,8 +503,8 @@ export default function UploadPage() {
                 <span
                   className={`w-[7px] h-[7px] rounded-full transition-colors ${
                     files.length > 0 || uploading
-                      ? "bg-[#059669] shadow-[0_0_5px_#059669] dark:bg-[#00e5a0] dark:shadow-[0_0_5px_#00e5a0]"
-                      : "bg-[#a8bcd4] dark:bg-[#1e3a5f]"
+                      ? "bg-[#059669] shadow-[0_0_5px_#059669]  "
+                      : "bg-[#a8bcd4] "
                   }`}
                 />
                 <span
@@ -533,7 +525,7 @@ export default function UploadPage() {
               tabIndex={0}
               className={`relative overflow-hidden  px-6 py-[38px] text-center cursor-pointer transition-all border-[1.5px] border-dashed ${
                 isDragOver
-                  ? `border-[#2563eb] dark:border-[#3b82f6] ${acc05}`
+                  ? `border-[#2563eb]  ${acc05}`
                   : `${borderAcc} ${pageBg}`
               }`}
               onDragOver={(e) => {
@@ -548,7 +540,7 @@ export default function UploadPage() {
                 fileInputRef.current?.click()
               }
             >
-              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(37,99,235,0.05)_0%,transparent_65%)] dark:bg-[radial-gradient(ellipse_at_50%_0%,rgba(59,130,246,0.06)_0%,transparent_65%)]" />
+              <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_50%_0%,rgba(37,99,235,0.05)_0%,transparent_65%)] " />
               <div className={`mb-2.5 opacity-65 ${accText}`}>
                 <UploadCloud size={34} />
               </div>
@@ -595,10 +587,10 @@ export default function UploadPage() {
                   </span>
                 </div>
                 <div
-                  className={`h-[3px] rounded overflow-hidden ${border} bg-[rgba(30,58,95,0.10)] dark:bg-[rgba(59,130,246,0.13)]`}
+                  className={`h-[3px] rounded overflow-hidden ${border} bg-[rgba(30,58,95,0.10)] `}
                 >
                   <div
-                    className="h-full bg-gradient-to-r from-[#1e3a5f] to-[#2563eb] dark:from-[#0f172a] dark:to-[#3b82f6] transition-[width] duration-200 ease-out"
+                    className="h-full bg-gradient-to-r from-[#1e3a5f] to-[#2563eb]   transition-[width] duration-200 ease-out"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
@@ -627,7 +619,7 @@ export default function UploadPage() {
                   )}
                 </div>
                 <button
-                  className={`inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] border transition-all ${border} ${card2Bg} ${fgm} hover:text-[#2563eb] hover:border-[#2563eb] dark:hover:text-[#3b82f6] dark:hover:border-[#3b82f6]`}
+                  className={`inline-flex items-center justify-center w-[30px] h-[30px] rounded-[7px] border transition-all ${border} ${card2Bg} ${fgm} hover:text-[#2563eb] hover:border-[#2563eb]  `}
                   onClick={() => activeBucket && loadFiles(activeBucket)}
                   title="Refresh files"
                 >
@@ -700,7 +692,7 @@ export default function UploadPage() {
                         return (
                           <tr
                             key={f.key}
-                            className={`border-b last:border-b-0 transition-colors hover:bg-[rgba(37,99,235,0.04)] dark:hover:bg-[rgba(59,130,246,0.06)] ${border}`}
+                            className={`border-b last:border-b-0 transition-colors hover:bg-[rgba(37,99,235,0.04)]  ${border}`}
                           >
                             {/* name */}
                             <td className="px-[18px] py-3 align-middle">
@@ -770,16 +762,16 @@ export default function UploadPage() {
         {deleteModal && (
           <div
             role="presentation"
-            className="up-fade fixed inset-0 z-[500] bg-[rgba(15,31,63,0.48)] dark:bg-black/65 backdrop-blur-sm flex items-center justify-center"
+            className="up-fade fixed inset-0 z-[500] bg-[rgba(15,31,63,0.48)]  backdrop-blur-sm flex items-center justify-center"
             onClick={() => !isDeleting && setDeleteModal(null)}
           >
             <div
               role="dialog"
               aria-modal="true"
-              className={`up-pop rounded-2xl p-7 w-full max-w-[390px] border border-[rgba(220,38,38,0.22)] dark:border-[rgba(248,113,113,0.25)] shadow-[0_20px_48px_rgba(0,0,0,0.16),0_0_0_1px_rgba(220,38,38,0.15)] ${cardBg}`}
+              className={`up-pop rounded-2xl p-7 w-full max-w-[390px] border border-[rgba(220,38,38,0.22)]  shadow-[0_20px_48px_rgba(0,0,0,0.16),0_0_0_1px_rgba(220,38,38,0.15)] ${cardBg}`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-[46px] h-[46px] rounded-[11px] mb-4 flex items-center justify-center border border-[rgba(220,38,38,0.22)] bg-[rgba(220,38,38,0.08)] text-[#dc2626] dark:border-[rgba(248,113,113,0.25)] dark:bg-[rgba(248,113,113,0.08)] dark:text-[#f87171]">
+              <div className="w-[46px] h-[46px] rounded-[11px] mb-4 flex items-center justify-center border border-[rgba(220,38,38,0.22)] bg-[rgba(220,38,38,0.08)] text-[#dc2626]   ">
                 <Trash2 size={20} />
               </div>
               <div
@@ -791,13 +783,13 @@ export default function UploadPage() {
                 This action cannot be undone. You are about to permanently
                 delete:
                 <br />
-                <span className="inline-block rounded-[5px] px-[7px] py-[3px] text-[0.75rem] font-semibold mt-[5px] break-all bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.15)] text-[#dc2626] dark:bg-[rgba(248,113,113,0.08)] dark:border-[rgba(248,113,113,0.15)] dark:text-[#f87171]">
+                <span className="inline-block rounded-[5px] px-[7px] py-[3px] text-[0.75rem] font-semibold mt-[5px] break-all bg-[rgba(220,38,38,0.08)] border border-[rgba(220,38,38,0.15)] text-[#dc2626]   ">
                   {deleteModal.name}
                 </span>
               </div>
               <div className="flex gap-2 justify-end">
                 <button
-                  className={`px-[17px] py-2 rounded-lg text-[0.92rem] font-medium tracking-[-0.01em] transition-all border ${border} ${card2Bg} ${fgm} hover:text-[#0f1f3d] hover:border-[#2563eb] dark:hover:text-[#e2e8f0] dark:hover:border-[#3b82f6]`}
+                  className={`px-[17px] py-2 rounded-lg text-[0.92rem] font-medium tracking-[-0.01em] transition-all border ${border} ${card2Bg} ${fgm} hover:text-[#0f1f3d] hover:border-[#2563eb]  `}
                   onClick={() => setDeleteModal(null)}
                   disabled={isDeleting}
                 >
@@ -822,17 +814,17 @@ export default function UploadPage() {
               toast.type === "error"
                 ? "border-[rgba(220,38,38,0.35)]"
                 : "border-[rgba(37,99,235,0.35)]"
-            } bg-[#1e3a5f] text-[#dbeafe] dark:bg-[#0f172a] dark:text-[#e2e8f0] shadow-[0_4px_24px_rgba(30,58,95,0.09)] dark:shadow-[0_6px_28px_rgba(0,0,0,0.4)]`}
+            } bg-[#1e3a5f] text-[#dbeafe]   shadow-[0_4px_24px_rgba(30,58,95,0.09)] `}
           >
             {toast.type === "success" ? (
               <CheckCircle
                 size={14}
-                className="text-[#059669] dark:text-[#00e5a0]"
+                className="text-[#059669] "
               />
             ) : (
               <AlertCircle
                 size={14}
-                className="text-[#dc2626] dark:text-[#f87171]"
+                className="text-[#dc2626] "
               />
             )}
             {toast.message}

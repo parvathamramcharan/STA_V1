@@ -288,7 +288,7 @@ export function DashboardReports({
       <div className="px-10 pt-6">
         <div className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm  ">
               <Globe size={19} className="text-blue-500" />
             </div>
             <div>
@@ -296,7 +296,7 @@ export function DashboardReports({
                 <h2 className="text-xl font-semibold text-foreground">
                   {discoveryMode === "country" ? "Countries" : "ISPs"}
                 </h2>
-                <span className="inline-flex min-w-10 items-center justify-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <span className="inline-flex min-w-10 items-center justify-center rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600  ">
                   {discoveryMode === "country"
                     ? geoData.countries.length
                     : geoData.isps.length}
@@ -323,77 +323,74 @@ export function DashboardReports({
                 setSearchQuery(e.target.value);
                 setListPage(1);
               }}
-              className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm font-normal text-foreground shadow-sm outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+              className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm font-normal text-foreground shadow-sm outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10   "
             />
           </div>
         </div>
 
-        <div className="mt-5 border-b border-slate-200 dark:border-slate-700" />
+        <div className="mt-5 border-b border-slate-200 " />
       </div>
 
       {/* Country / ISP List */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mx-10 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        className="mx-10 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm  "
       >
         <div className="p-5">
           <div className="grid grid-cols-1 gap-3 overflow-y-auto pr-1 custom-scrollbar sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-h-[330px]">
             {visibleItems.map((item) => {
-                const isCountry = discoveryMode === "country";
-                const flagClass = isCountry
-                  ? getCountryFlagClass(item.name)
-                  : null;
-                const displayName = isCountry
-                  ? getCountryDisplayName(item.name)
-                  : getIspDisplayName(item.name);
-                const isSelected = selectedItem?.name === item.name;
+              const isCountry = discoveryMode === "country";
+              const flagClass = isCountry
+                ? getCountryFlagClass(item.name)
+                : null;
+              const displayName = isCountry
+                ? getCountryDisplayName(item.name)
+                : getIspDisplayName(item.name);
+              const isSelected = selectedItem?.name === item.name;
 
-                return (
-                  <motion.button
-                    key={item.name}
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => handleItemSelect(item)}
-                    className={`group flex min-h-[62px] items-center rounded-lg border px-4 py-3 text-left transition-all duration-200 ${isSelected ? "border-blue-300 bg-blue-50/70 shadow-sm dark:border-blue-500/50 dark:bg-blue-500/10" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/70"}`}
-                  >
-                    <div className="flex min-w-0 w-full items-center gap-3">
-                      {isCountry ? (
-                        flagClass ? (
-                          <span
-                            className={`${flagClass} shrink-0`}
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <Globe
-                            size={16}
-                            className="shrink-0 text-slate-400"
-                          />
-                        )
+              return (
+                <motion.button
+                  key={item.name}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => handleItemSelect(item)}
+                  className={`group flex min-h-[62px] items-center rounded-lg border px-4 py-3 text-left transition-all duration-200 ${isSelected ? "border-blue-300 bg-blue-50/70 shadow-sm  " : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm    "}`}
+                >
+                  <div className="flex min-w-0 w-full items-center gap-3">
+                    {isCountry ? (
+                      flagClass ? (
+                        <span
+                          className={`${flagClass} shrink-0`}
+                          aria-hidden="true"
+                        />
                       ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 dark:bg-slate-800">
-                          <Server
-                            size={15}
-                            className="text-slate-500 dark:text-slate-400"
-                          />
-                        </div>
-                      )}
+                        <Globe size={16} className="shrink-0 text-slate-400" />
+                      )
+                    ) : (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 ">
+                        <Server
+                          size={15}
+                          className="text-slate-500 "
+                        />
+                      </div>
+                    )}
 
-                      <span
-                        className={`min-w-0 flex-1 truncate text-sm font-medium transition-colors ${isSelected ? "text-blue-700 dark:text-blue-400" : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"}`}
-                      >
-                        {displayName}
-                      </span>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm font-medium transition-colors ${isSelected ? "text-blue-700 " : "text-slate-700 group-hover:text-slate-900  "}`}
+                    >
+                      {displayName}
+                    </span>
 
-                      <span
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSelected ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-300"}`}
-                      >
-                        <ChevronRight size={14} />
-                      </span>
-                    </div>
-                  </motion.button>
-                );
-              })}
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSelected ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600    "}`}
+                    >
+                      <ChevronRight size={14} />
+                    </span>
+                  </div>
+                </motion.button>
+              );
+            })}
 
             {matchingItems.length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-14 text-center">
@@ -408,7 +405,7 @@ export function DashboardReports({
             )}
           </div>
           {matchingItems.length > 0 && (
-            <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3 text-xs text-slate-500 dark:border-slate-700">
+            <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3 text-xs text-slate-500 ">
               <span>
                 Showing {(listPage - 1) * listPageSize + 1}-
                 {Math.min(listPage * listPageSize, matchingItems.length)} of{" "}
@@ -420,7 +417,7 @@ export function DashboardReports({
                     type="button"
                     onClick={() => setListPage((page) => Math.max(1, page - 1))}
                     disabled={listPage === 1}
-                    className="rounded border border-slate-200 px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+                    className="rounded border border-slate-200 px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-40 "
                   >
                     Previous
                   </button>
@@ -433,7 +430,7 @@ export function DashboardReports({
                       setListPage((page) => Math.min(totalListPages, page + 1))
                     }
                     disabled={listPage === totalListPages}
-                    className="rounded border border-slate-200 px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+                    className="rounded border border-slate-200 px-3 py-1.5 font-medium disabled:cursor-not-allowed disabled:opacity-40 "
                   >
                     Next
                   </button>
@@ -452,7 +449,7 @@ export function DashboardReports({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mx-10 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-7 py-5 shadow-sm scroll-mt-20 dark:border-slate-700 dark:bg-slate-900"
+            className="mx-10 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-7 py-5 shadow-sm scroll-mt-20  "
           >
             <div className="flex min-w-0 items-center gap-4">
               {selectedCountryFlagClass && (
@@ -472,9 +469,9 @@ export function DashboardReports({
               {/* MAP VIEW */}
               <button
                 onClick={() => setIsMapOpen(true)}
-                className="group flex h-10 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 text-[16px] font-medium text-slate-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-500/40 dark:hover:bg-blue-500/10 dark:hover:text-blue-400"
+                className="group flex h-10 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 text-[16px] font-medium text-slate-600 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 active:scale-[0.98]      "
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:group-hover:bg-blue-500/20">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100   ">
                   <Globe size={15} />
                 </span>
                 <span className="whitespace-nowrap ">Map View</span>
@@ -484,9 +481,9 @@ export function DashboardReports({
               <button
                 onClick={handleDownloadReport}
                 disabled={isGeneratingPdf}
-                className="group flex h-10 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 text-[16px] font-medium text-slate-600 shadow-sm transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-500/40 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-400"
+                className="group flex h-10 items-center gap-2.5 rounded-lg border border-slate-200 bg-white px-4 text-[16px] font-medium text-slate-600 shadow-sm transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50      "
               >
-                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:group-hover:bg-emerald-500/20">
+                <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100   ">
                   <Database
                     size={15}
                     className={isGeneratingPdf ? "animate-spin" : ""}
@@ -832,7 +829,7 @@ export function DashboardReports({
 
                         <div className="space-y-6">
                           <div>
-                            <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                            <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                               City / Region
                             </div>
                             <div className="text-[14px] break-words">
@@ -841,7 +838,7 @@ export function DashboardReports({
                           </div>
 
                           <div>
-                            <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                            <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                               Country
                             </div>
                             <div className="text-[14px] break-words">
@@ -850,7 +847,7 @@ export function DashboardReports({
                           </div>
 
                           <div>
-                            <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                            <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                               Service Provider
                             </div>
                             <div className="text-[14px] break-words">
@@ -860,7 +857,7 @@ export function DashboardReports({
 
                           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-theme">
                             <div>
-                              <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                              <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                                 Latitude
                               </div>
                               <div className="text-[14px] break-words">
@@ -869,7 +866,7 @@ export function DashboardReports({
                             </div>
 
                             <div>
-                              <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+                              <div className="text-[16px] font-bold text-slate-700  mb-0.5">
                                 Longitude
                               </div>
                               <div className="text-[14px] break-words">
@@ -1165,13 +1162,13 @@ function DetailRow({ icon: Icon, label, value, subValue, color }) {
     >
       <div className="flex items-center gap-4">
         <Icon size={30} className="shrink-0" />
-        <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300">
+        <div className="text-[16px] font-bold text-slate-700 ">
           {label}
         </div>
       </div>
 
       <div className="min-w-0">
-        <div className="text-[14px] dark:text-slate-400 break-all mt-1">
+        <div className="text-[14px]  break-all mt-1">
           {value || "N/A"}
         </div>
 
@@ -1216,7 +1213,7 @@ WhoisField.propTypes = {
 function WhoisField({ label, value }) {
   return (
     <div className="min-w-0">
-      <div className="text-[16px] font-bold text-slate-700 dark:text-slate-300 mb-0.5">
+      <div className="text-[16px] font-bold text-slate-700  mb-0.5">
         {label}
       </div>
       <div className="text-[14px] break-words">{value || "N/A"}</div>

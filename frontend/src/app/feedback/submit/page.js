@@ -97,7 +97,7 @@ export default function SubmitFeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-card dark:bg-slate-900">
+    <div className="min-h-screen bg-card ">
       <div className="min-h-screen flex flex-col bg-card">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-theme bg-slate-500/5">

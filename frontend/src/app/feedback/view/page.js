@@ -278,7 +278,7 @@ export default function ViewFeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-card dark:bg-slate-900">
+    <div className="min-h-screen bg-card ">
       <div className="w-full min-h-screen flex flex-col bg-card">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-theme bg-slate-500/5 flex-shrink-0 sticky top-0 z-10">
@@ -401,7 +401,7 @@ export default function ViewFeedbackPage() {
               ) : (
                 <div className="space-y-2">
                   {/* Table Header */}
-                  <div className="hidden md:grid grid-cols-[10fr_12fr_10fr_8fr_11fr_13fr] gap-4 rounded-xl bg-slate-100 dark:bg-slate-800 dark:text-slate-400 px-4 py-3 font-serif">
+                  <div className="hidden md:grid grid-cols-[10fr_12fr_10fr_8fr_11fr_13fr] gap-4 rounded-xl bg-slate-100   px-4 py-3 font-serif">
                     <div className="text-left">Name</div>
                     <div className="text-left">Email</div>
                     <div className="text-left">Organisation</div>
@@ -416,7 +416,7 @@ export default function ViewFeedbackPage() {
                     return (
                       <div
                         key={key}
-                        className="bg-slate-50 p-4 shadow-sm transition-colors rounded-xl dark:bg-slate-800 dark:text-slate-400"
+                        className="bg-slate-50 p-4 shadow-sm transition-colors rounded-xl  "
                       >
                         <div className="grid grid-cols-[10fr_12fr_10fr_8fr_11fr_13fr] items-center gap-4">
                           {/* Name */}

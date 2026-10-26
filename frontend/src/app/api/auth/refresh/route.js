@@ -92,7 +92,9 @@ export async function GET(request) {
   const returnTo = request.nextUrl.searchParams.get("returnTo") || "/";
   const target = new URL(returnTo, request.url);
   const safeReturnTo =
-    target.origin === request.nextUrl.origin ? target.pathname + target.search : "/";
+    target.origin === request.nextUrl.origin
+      ? target.pathname + target.search
+      : "/";
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshClaims = await verifyJwt(refreshToken, "refresh");
@@ -103,8 +105,10 @@ export async function GET(request) {
     return response;
   }
 
-  const { response: tokenResponse, claims } =
-    await issueRefreshedTokens(refreshToken, accessToken);
+  const { response: tokenResponse, claims } = await issueRefreshedTokens(
+    refreshToken,
+    accessToken,
+  );
   if (!claims) {
     const redirect = NextResponse.redirect(new URL("/", request.url));
     clearAuthCookies(redirect);

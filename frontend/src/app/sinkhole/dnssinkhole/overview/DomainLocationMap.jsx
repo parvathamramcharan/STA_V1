@@ -10,8 +10,7 @@ function getLocatedIps(externalIps) {
   const uniqueIps = new Map();
 
   externalIps.filter(hasCoordinates).forEach((ip, index) => {
-    const key =
-      ip.ip || `location-${ip.latitude}-${ip.longitude}-${index}`;
+    const key = ip.ip || `location-${ip.latitude}-${ip.longitude}-${index}`;
     if (!uniqueIps.has(key)) uniqueIps.set(key, ip);
   });
 
@@ -35,14 +34,9 @@ function hasCoordinates(record) {
   );
 }
 
-export default function DomainLocationMap({
-  externalIps = EMPTY_IPS,
-}) {
+export default function DomainLocationMap({ externalIps = EMPTY_IPS }) {
   const [expanded, setExpanded] = useState(false);
-  const locatedIps = useMemo(
-    () => getLocatedIps(externalIps),
-    [externalIps],
-  );
+  const locatedIps = useMemo(() => getLocatedIps(externalIps), [externalIps]);
 
   useEffect(() => {
     if (!expanded) return undefined;
@@ -62,9 +56,7 @@ export default function DomainLocationMap({
 
   const expandOnMapClick = (event) => {
     if (
-      event.target.closest(
-        ".leaflet-marker-icon, .leaflet-control, button, a",
-      )
+      event.target.closest(".leaflet-marker-icon, .leaflet-control, button, a")
     ) {
       return;
     }

@@ -153,10 +153,7 @@ export async function triggerPcapExport(pcapId, type, value) {
   try {
     const url = `${BASE_URL}/reports/${pcapId}/${type}/${encodeURIComponent(value)}/export?sync=true`;
     const res = await fetchWithTimeout(url, { timeout: 120000 });
-    await downloadPdfResponse(
-      res,
-      `${pcapId}_${type}_${value}_report.pdf`,
-    );
+    await downloadPdfResponse(res, `${pcapId}_${type}_${value}_report.pdf`);
   } catch (error) {
     console.error(
       `[apiService] triggerPcapExport for ${pcapId}/${type}/${value}:`,

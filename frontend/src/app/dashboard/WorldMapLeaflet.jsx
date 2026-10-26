@@ -8,7 +8,6 @@ import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
 import "flag-icons/css/flag-icons.min.css";
-import { useTheme } from "@/components/ThemeProvider";
 import {
   getCountryDisplayName,
   getCountryCode,
@@ -657,7 +656,7 @@ const getPcapLineStyle = (count, zoomLevel) => {
   };
 };
 
-function ContinentLabels({ theme, L, labels, zoomLevel }) {
+function ContinentLabels({ L, labels, zoomLevel }) {
   if (!L) return null;
   if (typeof zoomLevel === "number" && zoomLevel >= 6) return null;
 
@@ -731,45 +730,6 @@ const sanitizeWorldGeoJSON = (geojson) => {
       ...feature,
       geometry: unwrapAntimeridianGeometry(feature.geometry),
     })),
-  };
-};
-
-const LAND_THEME = {
-  dark: {
-    fill: "#3d5977",
-    fillOpacity: 0.34,
-    hoverFillOpacity: 0.5,
-    border: "#7a9bbe",
-    borderOpacity: 0.38,
-    borderHover: "#bfdcfa",
-    hoverBorderOpacity: 0.8,
-    weight: 0.9,
-    hoverWeight: 1.4,
-  },
-  light: {
-    fill: "#5b84b8",
-    fillOpacity: 0.52,
-    hoverFillOpacity: 0.68,
-    border: "#faf8f2",
-    borderOpacity: 0.75,
-    borderHover: "#ffffff",
-    hoverBorderOpacity: 1,
-    weight: 0.85,
-    hoverWeight: 1.3,
-  },
-};
-
-const getLandStyle = (theme, hovered = false) => {
-  const t = LAND_THEME[theme] || LAND_THEME.dark;
-  return {
-    color: hovered ? t.borderHover : t.border,
-    weight: hovered ? t.hoverWeight : t.weight,
-    opacity: hovered ? t.hoverBorderOpacity : t.borderOpacity,
-    fillColor: t.fill,
-    fillOpacity: hovered ? t.hoverFillOpacity : t.fillOpacity,
-    lineCap: "round",
-    lineJoin: "round",
-    smoothFactor: 0,
   };
 };
 
@@ -988,7 +948,6 @@ export function WorldMapLeaflet({
   reportLabel,
   reportType,
 }) {
-  const { theme } = useTheme();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [L, setL] = useState(null);
@@ -1063,9 +1022,7 @@ export function WorldMapLeaflet({
     return Array.from(groups.values(), (group) => {
       const countries = Array.from(group.countries);
       const country =
-        countries.length > 1
-          ? "Multiple countries"
-          : countries[0] || "Unknown";
+        countries.length > 1 ? "Multiple countries" : countries[0] || "Unknown";
       const categoryLabel =
         reportType === "isp" ? reportLabel || "ISP" : country;
 
@@ -1211,7 +1168,7 @@ export function WorldMapLeaflet({
 
         {worldCountries && worldRenderer && (
           <GeoJSON
-            key={`world-${theme}-${mode}-${countryData.length}`}
+            key={`world-${mode}-${countryData.length}`}
             data={worldCountries}
             renderer={worldRenderer}
             pane="geoPane"
@@ -1237,7 +1194,6 @@ export function WorldMapLeaflet({
         )}
 
         <ContinentLabels
-          theme={theme}
           L={L}
           labels={CONTINENT_LABELS}
           zoomLevel={zoomLevel}
@@ -1279,7 +1235,7 @@ export function WorldMapLeaflet({
                   positions={positions}
                   interactive={false}
                   pathOptions={{
-                    color: theme === "dark" ? "#e2e8f0" : "#0f172a",
+                    color: "#0f172a",
                     weight: lineStyle.trackWeight,
                     opacity: lineStyle.trackOpacity,
                     lineCap: "round",
@@ -1830,16 +1786,12 @@ export function WorldMapLeaflet({
           color: ${
             mode === "summary"
               ? "rgba(15, 23, 42, 0.78)"
-              : theme === "dark"
-                ? "rgba(148, 197, 255, 0.55)"
-                : "rgba(30, 41, 59, 0.68)"
+              : "rgba(30, 41, 59, 0.68)"
           };
           text-shadow: ${
             mode === "summary"
               ? "0 1px 2px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.4)"
-              : theme === "dark"
-                ? "0 1px 3px rgba(0,0,0,0.9), 0 0 14px rgba(59,130,246,0.25)"
-                : "0 1px 2px rgba(255,255,255,0.7), 0 0 10px rgba(255,255,255,0.4)"
+              : "0 1px 2px rgba(255,255,255,0.7), 0 0 10px rgba(255,255,255,0.4)"
           };
         }
         .continent-label.label-large {
@@ -2110,7 +2062,6 @@ MapResetControl.propTypes = {
 };
 
 ContinentLabels.propTypes = {
-  theme: PropTypes.string,
   L: PropTypes.object,
   labels: PropTypes.array,
   zoomLevel: PropTypes.number,

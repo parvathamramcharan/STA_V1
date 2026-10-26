@@ -2,9 +2,7 @@ function decodeBase64Url(value) {
   const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
   const binary = atob(padded);
-  const bytes = Uint8Array.from(binary, (character) =>
-    character.charCodeAt(0),
-  );
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return bytes;
 }
 
