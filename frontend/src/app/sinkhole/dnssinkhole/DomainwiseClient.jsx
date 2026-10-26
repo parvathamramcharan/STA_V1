@@ -222,7 +222,9 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
               <h1 className="flex items-center gap-3 text-[22px] font-bold tracking-tight text-foreground">
                 DNS Sinkhole
                 <span className="inline-flex items-center gap-1.5 rounded-md border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 shadow-sm">
-                  <span className="font-bold tabular-nums">{total_domains}</span>
+                  <span className="font-bold tabular-nums">
+                    {total_domains}
+                  </span>
                   <span>Domains</span>
                 </span>
               </h1>
@@ -318,64 +320,82 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
                         {item.host}
                       </span>
                     </div>
-                   
-<div className="mt-2 w-full px-4">
-  <div className="grid w-full grid-cols-2 gap-x-6 gap-y-8 text-[16px] text-muted-foreground">
 
-    {/* Requests */}
-    <div className="flex items-center gap-3">
-      <Activity size={16} className="shrink-0 text-emerald-500" />
-      <div className="flex flex-col">
-        <span className="font-bold text-foreground">
-          {Number(item.request_count).toLocaleString("en-IN")}
-        </span>
-        <span className="text-[14px] text-muted-foreground">
-          Requests
-        </span>
-      </div>
-    </div>
+                    <div className="mt-2 w-full px-4">
+                      <div className="grid w-full grid-cols-2 gap-x-6 gap-y-8 text-[16px] text-muted-foreground">
+                        {/* Requests */}
+                        <div className="flex items-center gap-3">
+                          <Activity
+                            size={16}
+                            className="shrink-0 text-emerald-500"
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground">
+                              {Number(item.request_count).toLocaleString(
+                                "en-IN",
+                              )}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              Requests
+                            </span>
+                          </div>
+                        </div>
 
-    {/* Connected IPs */}
-    <div className="flex items-center gap-3">
-      <Hash size={16} className="shrink-0 text-violet-500" />
-      <div className="flex flex-col">
-        <span className="font-bold text-foreground">
-          {Number(item.connected_ip_count).toLocaleString("en-IN")}
-        </span>
-        <span className="text-[14px] text-muted-foreground">
-          IPs
-        </span>
-      </div>
-    </div>
+                        {/* Connected IPs */}
+                        <div className="flex items-center gap-3">
+                          <Hash
+                            size={16}
+                            className="shrink-0 text-violet-500"
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground">
+                              {Number(item.connected_ip_count).toLocaleString(
+                                "en-IN",
+                              )}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              IPs
+                            </span>
+                          </div>
+                        </div>
 
-    {/* PCAPs */}
-    <div className="flex items-center gap-3">
-      <FileText size={16} className="shrink-0 text-orange-500" />
-      <div className="flex flex-col">
-        <span className="font-bold text-foreground">
-          {Number(item.pcap_ids?.length ?? 0).toLocaleString("en-IN")}
-        </span>
-        <span className="text-[14px] text-muted-foreground">
-          PCAPs
-        </span>
-      </div>
-    </div>
+                        {/* PCAPs */}
+                        <div className="flex items-center gap-3">
+                          <FileText
+                            size={16}
+                            className="shrink-0 text-orange-500"
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground">
+                              {Number(
+                                item.pcap_ids?.length ?? 0,
+                              ).toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              PCAPs
+                            </span>
+                          </div>
+                        </div>
 
-    {/* Connections */}
-    <div className="flex items-center gap-3">
-      <Network size={16} className="shrink-0 text-blue-500" />
-      <div className="flex flex-col">
-        <span className="font-bold text-foreground">
-          {Number(item.total_connections ?? 0).toLocaleString("en-IN")}
-        </span>
-        <span className="text-[14px] text-muted-foreground">
-          Connections
-        </span>
-      </div>
-    </div>
-
-  </div>
-</div>
+                        {/* Connections */}
+                        <div className="flex items-center gap-3">
+                          <Network
+                            size={16}
+                            className="shrink-0 text-blue-500"
+                          />
+                          <div className="flex flex-col">
+                            <span className="font-bold text-foreground">
+                              {Number(
+                                item.total_connections ?? 0,
+                              ).toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[14px] text-muted-foreground">
+                              Connections
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     <ChevronRight
                       size={14}
@@ -475,7 +495,7 @@ export default function DomainwiseClient({ dnsData, pcapSetId }) {
             </div>
 
             {/* CONTENT */}
-           <div className="mt-1 flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-xl border border-theme bg-card p-4">
+            <div className="mt-1 flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-xl border border-theme bg-card p-4">
               {activeTab === "Map" && (
                 <DomainMap
                   selectedDomain={selectedDomain}

@@ -1063,9 +1063,7 @@ export function WorldMapLeaflet({
     return Array.from(groups.values(), (group) => {
       const countries = Array.from(group.countries);
       const country =
-        countries.length > 1
-          ? "Multiple countries"
-          : countries[0] || "Unknown";
+        countries.length > 1 ? "Multiple countries" : countries[0] || "Unknown";
       const categoryLabel =
         reportType === "isp" ? reportLabel || "ISP" : country;
 

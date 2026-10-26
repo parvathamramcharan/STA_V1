@@ -8,9 +8,7 @@ export default async function DomainwisePage() {
   if (!session) redirect("/");
   if (!session.user?.roles?.includes("admin")) redirect("/reports");
   if (!session.accessToken) {
-    console.log(
-      "access token is missing while loading the DNS sinkhole page",
-    );
+    console.log("access token is missing while loading the DNS sinkhole page");
     return <PcapErrorView />;
   }
 

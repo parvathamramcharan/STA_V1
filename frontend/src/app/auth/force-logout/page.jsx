@@ -21,13 +21,19 @@ export default function ForceLogoutPage() {
         try {
           localStorage.removeItem("ipSearchHistory");
         } catch (storageError) {
-          console.error("Could not clear saved IP search history:", storageError);
+          console.error(
+            "Could not clear saved IP search history:",
+            storageError,
+          );
         }
         router.replace("/");
         router.refresh();
       })
       .catch((logoutError) => {
-        console.error("Could not revoke the authentication tokens:", logoutError);
+        console.error(
+          "Could not revoke the authentication tokens:",
+          logoutError,
+        );
         if (active) {
           setError(
             logoutError instanceof Error

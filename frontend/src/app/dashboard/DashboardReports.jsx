@@ -340,60 +340,57 @@ export function DashboardReports({
         <div className="p-5">
           <div className="grid grid-cols-1 gap-3 overflow-y-auto pr-1 custom-scrollbar sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 max-h-[330px]">
             {visibleItems.map((item) => {
-                const isCountry = discoveryMode === "country";
-                const flagClass = isCountry
-                  ? getCountryFlagClass(item.name)
-                  : null;
-                const displayName = isCountry
-                  ? getCountryDisplayName(item.name)
-                  : getIspDisplayName(item.name);
-                const isSelected = selectedItem?.name === item.name;
+              const isCountry = discoveryMode === "country";
+              const flagClass = isCountry
+                ? getCountryFlagClass(item.name)
+                : null;
+              const displayName = isCountry
+                ? getCountryDisplayName(item.name)
+                : getIspDisplayName(item.name);
+              const isSelected = selectedItem?.name === item.name;
 
-                return (
-                  <motion.button
-                    key={item.name}
-                    whileHover={{ y: -1 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => handleItemSelect(item)}
-                    className={`group flex min-h-[62px] items-center rounded-lg border px-4 py-3 text-left transition-all duration-200 ${isSelected ? "border-blue-300 bg-blue-50/70 shadow-sm dark:border-blue-500/50 dark:bg-blue-500/10" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/70"}`}
-                  >
-                    <div className="flex min-w-0 w-full items-center gap-3">
-                      {isCountry ? (
-                        flagClass ? (
-                          <span
-                            className={`${flagClass} shrink-0`}
-                            aria-hidden="true"
-                          />
-                        ) : (
-                          <Globe
-                            size={16}
-                            className="shrink-0 text-slate-400"
-                          />
-                        )
+              return (
+                <motion.button
+                  key={item.name}
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => handleItemSelect(item)}
+                  className={`group flex min-h-[62px] items-center rounded-lg border px-4 py-3 text-left transition-all duration-200 ${isSelected ? "border-blue-300 bg-blue-50/70 shadow-sm dark:border-blue-500/50 dark:bg-blue-500/10" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:hover:bg-slate-800/70"}`}
+                >
+                  <div className="flex min-w-0 w-full items-center gap-3">
+                    {isCountry ? (
+                      flagClass ? (
+                        <span
+                          className={`${flagClass} shrink-0`}
+                          aria-hidden="true"
+                        />
                       ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 dark:bg-slate-800">
-                          <Server
-                            size={15}
-                            className="text-slate-500 dark:text-slate-400"
-                          />
-                        </div>
-                      )}
+                        <Globe size={16} className="shrink-0 text-slate-400" />
+                      )
+                    ) : (
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-50 dark:bg-slate-800">
+                        <Server
+                          size={15}
+                          className="text-slate-500 dark:text-slate-400"
+                        />
+                      </div>
+                    )}
 
-                      <span
-                        className={`min-w-0 flex-1 truncate text-sm font-medium transition-colors ${isSelected ? "text-blue-700 dark:text-blue-400" : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"}`}
-                      >
-                        {displayName}
-                      </span>
+                    <span
+                      className={`min-w-0 flex-1 truncate text-sm font-medium transition-colors ${isSelected ? "text-blue-700 dark:text-blue-400" : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"}`}
+                    >
+                      {displayName}
+                    </span>
 
-                      <span
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSelected ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-300"}`}
-                      >
-                        <ChevronRight size={14} />
-                      </span>
-                    </div>
-                  </motion.button>
-                );
-              })}
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-colors ${isSelected ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:bg-slate-700 dark:group-hover:text-slate-300"}`}
+                    >
+                      <ChevronRight size={14} />
+                    </span>
+                  </div>
+                </motion.button>
+              );
+            })}
 
             {matchingItems.length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-14 text-center">

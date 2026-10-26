@@ -1,7 +1,3 @@
-export default function IpSinkhole(){
-    return(
-        <div>
-        
-        </div>
-    )
+export default function IpSinkhole() {
+  return <div></div>;
 }

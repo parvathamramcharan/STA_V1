@@ -1,7 +1,17 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Globe, FileText, ArrowLeftRight, Radio, Server, Flag, MapPin, Building2,} from "lucide-react";
-import {  ResponsiveContainer,  PieChart, Pie, Cell, Tooltip,} from "recharts";
+import {
+  ArrowLeft,
+  Globe,
+  FileText,
+  ArrowLeftRight,
+  Radio,
+  Server,
+  Flag,
+  MapPin,
+  Building2,
+} from "lucide-react";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
 import { getCountryFlagClass } from "@/app/dashboard/countryUtils";
 import DomainLocationMap from "./DomainLocationMap";
 const COLORS = ["#1677ff", "#a435f0", "#10b981", "#f59e0b"];
@@ -9,7 +19,9 @@ function SummaryCard({ title, value, description, icon: Icon, color }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
       <div className="flex items-start gap-4">
-        <div className={`rounded-xl p-3 ${color} flex items-center justify-center`}>
+        <div
+          className={`rounded-xl p-3 ${color} flex items-center justify-center`}
+        >
           <Icon size={24} />
         </div>
 
@@ -62,16 +74,11 @@ function CountryDonut({ countries, totalDomains }) {
             stroke="none"
           >
             {chartData.map((entry, index) => (
-              <Cell
-                key={entry.name}
-                fill={COLORS[index % COLORS.length]}
-              />
+              <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
 
-          <Tooltip
-            formatter={(value, name) => [`${value} domains`, name]}
-          />
+          <Tooltip formatter={(value, name) => [`${value} domains`, name]} />
         </PieChart>
       </ResponsiveContainer>
 
@@ -106,18 +113,17 @@ export default function DnsSinkoleSummaryDashboard({
 
   const maxRequests = Math.max(
     ...domains.map((domain) => Number(domain.request_count ?? 0)),
-    1
+    1,
   );
 
   const totalCountryDomains = countries.reduce(
     (sum, country) => sum + Number(country.domain_count ?? 0),
-    0
+    0,
   );
 
   return (
     <div className="h-[calc(100vh-56px)] overflow-y-auto bg-slate-50 px-4 py-3">
       <div className="mx-auto flex max-w-[1800px] flex-col gap-5">
-
         {/* HEADER */}
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -184,7 +190,6 @@ export default function DnsSinkoleSummaryDashboard({
 
         {/* MAIN DASHBOARD */}
         <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[0.9fr_0.9fr_1.2fr]">
-
           {/* TOP ACTIVE DOMAINS */}
           <Panel title="Top Active Domains" icon={Globe}>
             <div className="overflow-x-auto">
@@ -199,13 +204,18 @@ export default function DnsSinkoleSummaryDashboard({
 
                 <tbody>
                   {domains.slice(0, 10).map((domain, index) => (
-                    <tr
-                      key={domain.host}
-                      className="border-b border-slate-100 last:border-0"
-                    >
-                      <td className="px-2 py-3 text-slate-500">
-                        {index + 1}
-                      </td>
+                    // <tr
+                    //   key={domain.host}
+                    //   className="border-b border-slate-100 last:border-0"
+                    // >
+                      <tr
+                        key={domain.host}
+                        onClick={() =>
+                          (window.location.href = `/sinkhole/dnssinkhole/${encodeURIComponent(domain.host)}`)
+                        }
+                        className="cursor-pointer border-b border-slate-100 last:border-0 transition-colors hover:bg-blue-50"
+                      >
+                      <td className="px-2 py-3 text-slate-500">{index + 1}</td>
 
                       <td
                         className="max-w-[150px] truncate px-2 py-3 font-medium"
@@ -239,7 +249,10 @@ export default function DnsSinkoleSummaryDashboard({
 
                   {domains.length === 0 && (
                     <tr>
-                      <td colSpan={3} className="py-6 text-center text-slate-500">
+                      <td
+                        colSpan={3}
+                        className="py-6 text-center text-slate-500"
+                      >
                         No domains available.
                       </td>
                     </tr>
@@ -289,21 +302,23 @@ export default function DnsSinkoleSummaryDashboard({
 
                     <p
                       className="mt-2 truncate pl-5 text-xs text-slate-800"
-                        title={(country.domains ?? []).join(", ")}
-                      >
-                        {(country.domains ?? []).join(", ")}
-                      </p>
-                    </div>
+                      title={(country.domains ?? []).join(", ")}
+                    >
+                      {(country.domains ?? []).join(", ")}
+                    </p>
+                  </div>
                 );
               })}
             </div>
           </Panel>
 
           {/* DOMAIN LOCATIONS */}
-          <Panel title="Domain Locations" icon={MapPin} className="flex flex-col">
-            <DomainLocationMap
-              externalIps={data.external_ips ?? []}
-            />
+          <Panel
+            title="Domain Locations"
+            icon={MapPin}
+            className="flex flex-col"
+          >
+            <DomainLocationMap externalIps={data.external_ips ?? []} />
           </Panel>
         </div>
 
