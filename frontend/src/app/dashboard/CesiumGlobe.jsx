@@ -1,55 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { RotateCcw } from "lucide-react";
 import "cesium/Build/Cesium/Widgets/widgets.css";
+import { getCountryDisplayName } from "@/constants/countryMapping";
+import {
+  getCountryColor,
+  getCountryMarkerColor,
+  getCountryDataForFeature,
+  INDIA_LAND_COLOR,
+  PAKISTAN_LAND_COLOR,
+} from "./countryColors";
 
-const MARKER_SIZE = 5;
-const MARKER_VISIBLE_DURATION_SECONDS = 10;
-const MARKER_HIDDEN_DURATION_SECONDS = 1;
 const MIN_GLOBE_ZOOM_DISTANCE = 150_000;
 const MAX_GLOBE_ZOOM_DISTANCE = 30_000_000;
 const GLOBE_IDLE_DELAY_MS = 2000;
 const GLOBE_ROTATION_RADIANS_PER_SECOND = 0.050;
-const MARKER_COLOR_STOPS = [
-  "#4338CA",
-  "#2563EB",
-  "#0891B2",
-  "#16A34A",
-  "#EAB308",
-  "#EA580C",
-  "#B91C1C",
-];
-const GLOBE_BACKGROUND_COLOR = "#F8FAFC";
 const GLOBE_DARK_BACKGROUND_COLOR = "#050B14";
-const MARKER_OUTLINE_COLOR = "#FFFFFF";
-const MARKER_OUTLINE_WIDTH = 1.5;
-// const GLOBE_OCEAN_COLOR = "#B8D0DA";
 const GLOBE_OCEAN_COLOR = "#8FB9CC";
-const GLOBE_COUNTRY_BORDER_COLOR = "#75838A";
-const INDIA_LAND_COLOR = "#F4C542";
-const INDIA_BORDER_COLOR = "#8A6415";
-const PAKISTAN_LAND_COLOR = "#8FAFDC";
-
-// const COUNTRY_COLORS = [
-//   "#D99A82",
-//   "#9FC7A5",
-//   "#A9BDDF",
-//   "#D7A7C9",
-//   "#E4C66F",
-//   "#80C5C1",
-//   "#B5A4D8",
-//   "#D9B18C",
-// ];
-const COUNTRY_COLORS = [
-  "#D18468", // Richer terracotta
-  "#87B991", // Richer sage green
-  "#8FAFDC", // Richer blue
-  "#CE8FBA", // Richer dusty pink
-  "#DDBB4F", // Richer golden yellow
-  "#65B8B3", // Richer teal
-  "#A48CD0", // Richer lavender
-  "#D1A174", // Richer sand
-];
+const GLOBE_COUNTRY_BORDER_COLOR = "#64748B";
+const INDIA_BORDER_COLOR = "#64748B";
 const NAME_KEYS = [
   "ADMIN",
   "admin",
@@ -86,49 +56,11 @@ const isIndiaFeature = (feature) => {
   );
 };
 
-const getCountryColor = (properties) => {
-  const isoCode = String(
-    properties.iso_a3 || properties.ISO_A3 || properties.adm0_a3 || "",
-  ).toUpperCase();
-  const countryName = normalizeCountryName(getFeatureCountryName(properties));
-
-  if (isoCode === "IND" || countryName === "india") return INDIA_LAND_COLOR;
-  if (isoCode === "PAK" || countryName === "pakistan") {
-    return PAKISTAN_LAND_COLOR;
-  }
-
-  const identity = isoCode || getFeatureCountryName(properties) || "";
-  let hash = 0;
-  for (const character of String(identity)) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-  return COUNTRY_COLORS[hash % COUNTRY_COLORS.length];
-};
-
-function findCountryData(featureName, countryData) {
-  const normalizedFeatureName = normalizeCountryName(featureName);
-  if (!normalizedFeatureName) return null;
-
-  return (
-    countryData.find(
-      (entry) => {
-        const normalizedEntryName = normalizeCountryName(entry.name);
-        return (
-          normalizedEntryName &&
-          (normalizedEntryName === normalizedFeatureName ||
-            normalizedEntryName.includes(normalizedFeatureName) ||
-            normalizedFeatureName.includes(normalizedEntryName))
-        );
-      },
-    ) || null
-  );
-}
-
 export default function CesiumGlobe({
   worldCountries,
   indiaBorder,
   countryData,
-  summaryMarkers,
+  summaryMarkerGroups,
   onCountrySelect,
 }) {
   const containerRef = useRef(null);
@@ -137,20 +69,7 @@ export default function CesiumGlobe({
   const cesiumRef = useRef(null);
   const homeViewRef = useRef(null);
   const [error, setError] = useState("");
-  const [darkBackground, setDarkBackground] = useState(false);
-  const darkBackgroundRef = useRef(darkBackground);
-
-  useEffect(() => {
-    darkBackgroundRef.current = darkBackground;
-    const viewer = viewerRef.current;
-    const Cesium = cesiumRef.current;
-    if (!viewer || viewer.isDestroyed() || !Cesium) return;
-
-    viewer.scene.backgroundColor = Cesium.Color.fromCssColorString(
-      darkBackground ? GLOBE_DARK_BACKGROUND_COLOR : GLOBE_BACKGROUND_COLOR,
-    );
-    viewer.scene.requestRender();
-  }, [darkBackground]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!worldCountries || !containerRef.current) return undefined;
@@ -186,15 +105,13 @@ export default function CesiumGlobe({
         });
 
         viewer.scene.backgroundColor = Cesium.Color.fromCssColorString(
-          darkBackgroundRef.current
-            ? GLOBE_DARK_BACKGROUND_COLOR
-            : GLOBE_BACKGROUND_COLOR,
+          GLOBE_DARK_BACKGROUND_COLOR,
         );
         viewer.scene.globe.baseColor =
           Cesium.Color.fromCssColorString(GLOBE_OCEAN_COLOR);
-        viewer.scene.skyBox.show = false;
-        viewer.scene.sun.show = false;
-        viewer.scene.moon.show = false;
+        viewer.scene.skyBox.show = true;
+        viewer.scene.sun.show = true;
+        viewer.scene.moon.show = true;
         viewer.scene.globe.showGroundAtmosphere = false;
         viewer.scene.skyAtmosphere.show = false;
         viewer.scene.screenSpaceCameraController.minimumZoomDistance =
@@ -266,7 +183,7 @@ export default function CesiumGlobe({
             clampToGround: false,
             stroke: globeBorderColor,
             strokeWidth: 1,
-            fill: Cesium.Color.fromCssColorString(COUNTRY_COLORS[0]),
+            fill: Cesium.Color.fromCssColorString(getCountryColor({})),
           },
         );
         if (!active) return;
@@ -290,7 +207,11 @@ export default function CesiumGlobe({
           }
 
           entity.polygon.material = Cesium.Color.fromCssColorString(
-            getCountryColor(properties),
+            getCountryMarkerColor(
+              properties,
+              countryData,
+              summaryMarkerGroups,
+            ) || getCountryColor(properties),
           );
           entity.polygon.height = 12000;
           entity.polygon.outline = !isIndiaFeature({ properties });
@@ -314,7 +235,13 @@ export default function CesiumGlobe({
             entity.name = "India";
             if (!entity.polygon) return;
             entity.polygon.material =
-              Cesium.Color.fromCssColorString(INDIA_LAND_COLOR);
+              Cesium.Color.fromCssColorString(
+                getCountryMarkerColor(
+                  { ADMIN: "India" },
+                  countryData,
+                  summaryMarkerGroups,
+                ) || INDIA_LAND_COLOR,
+              );
             entity.polygon.height = 14000;
             entity.polygon.outline = false;
           });
@@ -346,7 +273,7 @@ export default function CesiumGlobe({
                   name: "India",
                   polyline: {
                     positions,
-                    width: 1.25,
+                    width: 1,
                     arcType: Cesium.ArcType.RHUMB,
                     material: Cesium.Color.fromCssColorString(
                       INDIA_BORDER_COLOR,
@@ -376,63 +303,8 @@ export default function CesiumGlobe({
           });
         }
 
-        const markerEntries = new Map();
-        const markerBlinkStart = performance.now();
-        const maxMarkerCount = Math.max(
-          1,
-          ...summaryMarkers.map(({ entry }) => Number(entry.count) || 0),
-        );
-        const markerColors = MARKER_COLOR_STOPS.map((color) =>
-          Cesium.Color.fromCssColorString(color),
-        );
-        const getMarkerColor = (count) => {
-          const ratio =
-            Math.log1p(Math.max(0, count)) / Math.log1p(maxMarkerCount);
-          const scaledRatio = ratio * (markerColors.length - 1);
-          const lowerIndex = Math.min(
-            Math.floor(scaledRatio),
-            markerColors.length - 2,
-          );
-          return Cesium.Color.lerp(
-            markerColors[lowerIndex],
-            markerColors[lowerIndex + 1],
-            scaledRatio - lowerIndex,
-            new Cesium.Color(),
-          );
-        };
-        summaryMarkers.forEach(({ entry, lat, lng }, index) => {
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-          const id = `summary-marker-${index}`;
-          markerEntries.set(id, entry);
-          const blinkPhase =
-            ((index * 0.61803398875) % 1) *
-            (MARKER_VISIBLE_DURATION_SECONDS + MARKER_HIDDEN_DURATION_SECONDS);
-          const markerVisible = new Cesium.CallbackProperty(() => {
-            const elapsed = (performance.now() - markerBlinkStart) / 1000;
-            const cycleDuration =
-              MARKER_VISIBLE_DURATION_SECONDS +
-              MARKER_HIDDEN_DURATION_SECONDS;
-            const cyclePosition = (elapsed + blinkPhase) % cycleDuration;
-            return cyclePosition < MARKER_VISIBLE_DURATION_SECONDS;
-          }, false);
-          viewer.entities.add({
-            id,
-            position: Cesium.Cartesian3.fromDegrees(lng, lat, 80000),
-            point: {
-              pixelSize: MARKER_SIZE,
-              color: getMarkerColor(Number(entry.count) || 0),
-              outlineColor: Cesium.Color.fromCssColorString(
-                MARKER_OUTLINE_COLOR,
-              ),
-              outlineWidth: MARKER_OUTLINE_WIDTH,
-              show: markerVisible,
-            },
-          });
-        });
-
         viewer.screenSpaceEventHandler.setInputAction(({ endPosition }) => {
           const picked = viewer.scene.pick(endPosition);
-          const markerEntry = markerEntries.get(picked?.id?.id);
           const entity = picked?.id;
           const properties =
             entity?.properties?.getValue(Cesium.JulianDate.now()) || {};
@@ -440,10 +312,9 @@ export default function CesiumGlobe({
             entity?.name ||
             getFeatureCountryName(properties) ||
             getFeatureCountryName(entity?.properties);
-          const hoveredCountryName = markerEntry?.name || countryName;
           const hoverCard = hoverCardRef.current;
 
-          if (!hoveredCountryName || !hoverCard) {
+          if (!countryName || !hoverCard) {
             viewer.canvas.style.cursor = "";
             if (hoverCard) hoverCard.style.display = "none";
             return;
@@ -462,18 +333,12 @@ export default function CesiumGlobe({
           hoverCard.style.left = `${Math.max(8, left)}px`;
           hoverCard.style.top = `${Math.max(8, top)}px`;
           hoverCard.querySelector("[data-hover-country]").textContent =
-            hoveredCountryName;
+            getCountryDisplayName(countryName);
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         viewer.screenSpaceEventHandler.setInputAction(({ position }) => {
           const picked = viewer.scene.pick(position);
           if (!Cesium.defined(picked?.id)) return;
-
-          const markerEntry = markerEntries.get(picked.id.id);
-          if (markerEntry) {
-            onCountrySelect?.(markerEntry);
-            return;
-          }
 
           const entity = picked.id;
           if (!entity.polygon) return;
@@ -481,8 +346,11 @@ export default function CesiumGlobe({
             entity.properties?.getValue(Cesium.JulianDate.now()) || {};
           const countryName =
             entity.name || getFeatureCountryName(properties);
-          const country = findCountryData(countryName, countryData);
-          if (country) onCountrySelect?.(country);
+          const country = getCountryDataForFeature(
+            properties.ADMIN ? properties : { ADMIN: countryName },
+            countryData,
+          );
+          onCountrySelect?.(country || { name: countryName || "Unknown" });
         }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
         resizeObserver = new ResizeObserver(() => {
@@ -492,6 +360,14 @@ export default function CesiumGlobe({
           }
         });
         resizeObserver.observe(containerRef.current);
+
+        const finishInitialRender = () => {
+          if (!active) return;
+          setIsLoading(false);
+          viewer.scene.postRender.removeEventListener(finishInitialRender);
+        };
+        viewer.scene.postRender.addEventListener(finishInitialRender);
+        viewer.scene.requestRender();
       } catch (loadError) {
         if (!active) return;
         console.error("Failed to load the offline Cesium globe:", loadError);
@@ -500,6 +376,7 @@ export default function CesiumGlobe({
         cesiumRef.current = null;
         viewer = undefined;
         setError("The offline 3D globe could not be loaded.");
+        setIsLoading(false);
       }
     };
 
@@ -519,17 +396,8 @@ export default function CesiumGlobe({
     countryData,
     indiaBorder,
     onCountrySelect,
-    summaryMarkers,
     worldCountries,
   ]);
-
-  if (!worldCountries) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-[#F8FAFC] text-sm font-medium text-slate-600">
-        Loading local world boundaries…
-      </div>
-    );
-  }
 
   const zoomBy = (factor) => {
     const viewer = viewerRef.current;
@@ -557,66 +425,52 @@ export default function CesiumGlobe({
       },
     });
   };
-
   return (
     <div
-      className={`relative h-full w-full overflow-hidden rounded-[24px] border ${
-        darkBackground
-          ? "border-slate-700 bg-[#050B14]"
-          : "border-slate-200 bg-[#F8FAFC]"
-      }`}
+      className="relative h-full w-full overflow-hidden rounded-[24px] border border-slate-700 bg-[#050B14]"
     >
       <div ref={containerRef} className="h-full w-full" />
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-[5] flex flex-col items-center justify-center gap-4 bg-[#050B14]/85 text-center backdrop-blur-[2px]"
+          role="status"
+          aria-busy="true"
+          aria-label={
+            worldCountries ? "Loading 3D globe" : "Loading world boundaries"
+          }
+        >
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+          <p className="animate-pulse text-sm font-semibold text-slate-200">
+            {worldCountries
+              ? "Loading 3D Globe..."
+              : "Loading local world boundaries..."}
+          </p>
+        </div>
+      )}
       <div
         ref={hoverCardRef}
         className="pointer-events-none absolute z-10 hidden max-w-[min(15rem,calc(100%-1rem))] truncate rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-xl"
       >
         <div data-hover-country />
       </div>
-      <div
-        className="absolute bottom-16 left-4 z-30 inline-flex rounded-lg border border-slate-300 bg-white/95 p-1 shadow-lg backdrop-blur sm:bottom-16 sm:left-5"
-        role="group"
-        aria-label="Globe background"
-      >
-        <button
-          type="button"
-          aria-pressed={!darkBackground}
-          onClick={() => setDarkBackground(false)}
-          className={`rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-colors sm:text-xs ${
-            !darkBackground
-              ? "bg-blue-600 text-white"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          White
-        </button>
-        <button
-          type="button"
-          aria-pressed={darkBackground}
-          onClick={() => setDarkBackground(true)}
-          className={`rounded-md px-2.5 py-1.5 text-[10px] font-semibold transition-colors sm:text-xs ${
-            darkBackground
-              ? "bg-slate-900 text-white"
-              : "text-slate-600 hover:bg-slate-100"
-          }`}
-        >
-          Black
-        </button>
-      </div>
       <div className="absolute bottom-4 right-3 z-10 w-40 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur sm:bottom-5 sm:right-5 sm:w-48">
         <div className="mb-1.5 text-[10px] font-semibold text-slate-600 sm:text-xs">
-          IP count
+          Country IP count
         </div>
-        <div
-          className="h-2 rounded-full"
-          style={{
-            background: `linear-gradient(to right, ${MARKER_COLOR_STOPS.join(", ")})`,
-          }}
-          aria-hidden="true"
-        />
-        <div className="mt-1 flex justify-between text-[9px] text-slate-500 sm:text-[10px]">
-          <span>Low</span>
-          <span>High</span>
+        <div className="flex flex-col gap-1">
+          {summaryMarkerGroups.map((group) => (
+            <div
+              key={group.id}
+              className="flex items-center gap-2 text-[9px] text-slate-600 sm:text-[10px]"
+            >
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                style={{ backgroundColor: group.color }}
+                aria-hidden="true"
+              />
+              <span>{group.label}</span>
+            </div>
+          ))}
         </div>
       </div>
       <div className="absolute right-3 top-1/2 z-10 flex -translate-y-1/2 flex-col gap-2 sm:right-5">
@@ -650,9 +504,9 @@ export default function CesiumGlobe({
               });
             }
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-[10px] font-bold text-slate-700 shadow-lg transition hover:bg-blue-600 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:h-10 sm:w-10"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/95 text-slate-700 shadow-lg transition hover:bg-blue-600 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:h-10 sm:w-10"
         >
-          HOME
+          <RotateCcw size={17} aria-hidden="true" />
         </button>
       </div>
       {error && (

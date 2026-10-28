@@ -223,12 +223,61 @@ export default function DashboardClientView({ session }) {
   // ---------------------------------------------------------
   if (isLoading || !data) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      <div
+        className="space-y-0 pb-10"
+        role="status"
+        aria-busy="true"
+        aria-label="Fetching dashboard data"
+      >
+        <span className="sr-only">Fetching dashboard data...</span>
 
-        <p className="animate-pulse text-sm font-bold text-slate-500">
-          Fetching Data...
-        </p>
+        <div className="mx-6 mt-4 h-[clamp(500px,68vh,680px)] animate-pulse overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-slate-100 shadow-[0_20px_50px_rgba(71,85,105,0.14),0_2px_10px_rgba(71,85,105,0.06)]">
+          <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-100 via-slate-200/70 to-slate-100">
+            <div className="h-10 w-10 rounded-full bg-slate-300/70" />
+            <div className="h-3 w-40 rounded bg-slate-300/70" />
+          </div>
+        </div>
+
+        <div className="sticky top-14 z-30 w-full bg-white py-4">
+          <div className="mx-6">
+            <div className="flex w-full rounded-2xl border border-blue-400/20 bg-slate-50 shadow-[0_0_0_1px_rgba(59,130,246,0.06),0_0_25px_rgba(59,130,246,0.10)]">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+
+                return (
+                  <div
+                    key={tab.id}
+                    className="flex h-14 flex-1 items-center justify-center gap-2.5 border-r border-blue-200/30 px-4 text-slate-300 last:border-r-0"
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    <span className="text-[15px] font-semibold">{tab.id}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-6 my-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex animate-pulse items-center gap-2">
+            <span className="h-4 w-1 rounded-full bg-blue-200" />
+            <span className="h-4 w-36 rounded bg-slate-200" />
+          </div>
+          <div className="grid animate-pulse grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 9 }, (_, index) => (
+              <div
+                key={index}
+                className="flex min-h-[104px] items-center gap-5 rounded-xl border border-slate-100 bg-slate-50 p-6"
+              >
+                <div className="h-14 w-14 shrink-0 rounded-2xl bg-slate-200" />
+                <div className="space-y-2">
+                  <div className="h-3 w-24 rounded bg-slate-200" />
+                  <div className="h-4 w-16 rounded bg-slate-200" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -416,11 +465,7 @@ export default function DashboardClientView({ session }) {
 
                         group-hover:visible
                         group-hover:translate-y-0
-                        group-hover:opacity-100
-
-                        
-                        
-                        
+                        group-hover:opacity-100  
                       "
                     >
                       {/* Dropdown heading */}
