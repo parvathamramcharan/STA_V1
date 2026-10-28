@@ -1,9 +1,18 @@
 "use client";
-import { Fragment, useState, useEffect, useMemo } from "react";
+import { Fragment, useState, useEffect, useMemo, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, Globe, MapPin, Radio, Activity, Zap } from "lucide-react";
+import {
+  X,
+  Search,
+  Globe,
+  Map as MapIcon,
+  MapPin,
+  Radio,
+  Activity,
+  Zap,
+} from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
@@ -18,6 +27,7 @@ const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false },
 );
+const CesiumGlobe = dynamic(() => import("./CesiumGlobe"), { ssr: false });
 const ZoomControl = dynamic(
   () => import("react-leaflet").then((mod) => mod.ZoomControl),
   { ssr: false },
@@ -947,6 +957,7 @@ export function WorldMapLeaflet({
   fallbackCountry,
   reportLabel,
   reportType,
+  enableViewToggle = false,
 }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -955,6 +966,7 @@ export function WorldMapLeaflet({
   const [worldCountries, setWorldCountries] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(2);
   const [viewport, setViewport] = useState(null);
+  const [mapView, setMapView] = useState("flat");
 
   useEffect(() => {
     import("leaflet").then((leaflet) => {
@@ -1087,6 +1099,18 @@ export function WorldMapLeaflet({
     () => buildCountryIsoIndex(worldCountries),
     [worldCountries],
   );
+  const handleGlobeCountrySelect = useCallback(
+    (entry) => {
+      setSelectedCountry({
+        name: getMappedCountryName(entry.name),
+        iso2: getCountryIso2(entry.name, countryIsoIndex),
+        count: entry.count || 0,
+        captures: entry.captures_seen ?? entry.captures ?? 0,
+        packets: entry.packets || 0,
+      });
+    },
+    [countryIsoIndex],
+  );
 
   const indiaRenderer = useMemo(() => (L ? L.svg() : null), [L]);
   const worldRenderer = useMemo(() => (L ? L.svg() : null), [L]);
@@ -1140,30 +1164,42 @@ export function WorldMapLeaflet({
       ? "w-full h-full relative z-0 overflow-hidden bg-card [&_.leaflet-container]:!bg-[var(--leaflet-bg)] [&_.continent-label-marker]:!bg-transparent [&_.continent-label-marker]:!border-0 [&_.continent-label-marker]:!shadow-none [&_.leaflet-tooltip]:!bg-card [&_.leaflet-tooltip]:!backdrop-blur-none [&_.leaflet-tooltip]:!border [&_.leaflet-tooltip]:!border-theme [&_.leaflet-tooltip]:!rounded-xl [&_.leaflet-tooltip]:!shadow-[0_20px_50px_rgba(15,23,42,0.18)] [&_.leaflet-tooltip]:!p-0 [&_.leaflet-tooltip]:!text-foreground [&_.leaflet-tooltip]:overflow-hidden [&_.leaflet-grab]:!cursor-pointer [&_.leaflet-dragging_.leaflet-grab]:!cursor-grabbing"
       : "w-full h-full relative z-0 rounded-[24px] overflow-hidden border border-theme/70 transition-all duration-300 bg-card shadow-[0_18px_50px_rgba(15,23,42,0.16)] [&_.leaflet-container]:!bg-[var(--leaflet-bg)] [&_.continent-label-marker]:!bg-transparent [&_.continent-label-marker]:!border-0 [&_.continent-label-marker]:!shadow-none [&_.leaflet-tooltip]:!bg-card [&_.leaflet-tooltip]:!backdrop-blur-none [&_.leaflet-tooltip]:!border [&_.leaflet-tooltip]:!border-theme [&_.leaflet-tooltip]:!rounded-xl [&_.leaflet-tooltip]:!shadow-[0_20px_50px_rgba(15,23,42,0.18)] [&_.leaflet-tooltip]:!p-0 [&_.leaflet-tooltip]:!text-foreground [&_.leaflet-tooltip]:overflow-hidden [&_.leaflet-grab]:!cursor-pointer [&_.leaflet-dragging_.leaflet-grab]:!cursor-grabbing";
 
-  if (!L)
+  const showGlobe = enableViewToggle && mapView === "globe";
+
+  if (!L && !showGlobe)
     return (
       <div className="w-full h-full bg-slate-900 animate-pulse rounded-none" />
     );
 
   return (
     <div className={mapShellClassName} style={mapContainerStyle}>
-      <MapContainer
-        center={initialCenter}
-        zoom={initialZoom}
-        minZoom={2}
-        maxZoom={12}
-        style={{ height: "100%", width: "100%", background: "transparent" }}
-        zoomControl={false}
-        attributionControl={false}
-        keyboard={false}
-        worldCopyJump={true}
-        preferCanvas={true}
-        maxBounds={[
-          [-90, -180],
-          [90, 180],
-        ]}
-        maxBoundsViscosity={1.0}
-      >
+      {showGlobe ? (
+        <CesiumGlobe
+          worldCountries={worldCountries}
+          indiaBorder={indiaBorder}
+          countryData={countryData}
+          summaryMarkers={summaryMarkerItems}
+          onCountrySelect={handleGlobeCountrySelect}
+        />
+      ) : (
+        <>
+          <MapContainer
+            center={initialCenter}
+            zoom={initialZoom}
+            minZoom={2}
+            maxZoom={12}
+            style={{ height: "100%", width: "100%", background: "transparent" }}
+            zoomControl={false}
+            attributionControl={false}
+            keyboard={false}
+            worldCopyJump={true}
+            preferCanvas={true}
+            maxBounds={[
+              [-90, -180],
+              [90, 180],
+            ]}
+            maxBoundsViscosity={1.0}
+          >
         <MapResetControl L={L} center={initialCenter} zoom={initialZoom} />
 
         {worldCountries && worldRenderer && (
@@ -1478,9 +1514,11 @@ export function WorldMapLeaflet({
             interactive={false}
           />
         )}
-      </MapContainer>
+          </MapContainer>
 
-      <div className="map-atmosphere-vignette" aria-hidden="true" />
+          <div className="map-atmosphere-vignette" aria-hidden="true" />
+        </>
+      )}
 
       {title && (
         <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-2 pointer-events-none">
@@ -1523,6 +1561,41 @@ export function WorldMapLeaflet({
           </div>
         </motion.div>
       </div>
+
+      {enableViewToggle && mode === "summary" && (
+        <div
+          className="absolute bottom-5 left-5 z-[1000] inline-flex rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur"
+          role="group"
+          aria-label="Map view"
+        >
+          <button
+            type="button"
+            onClick={() => setMapView("flat")}
+            aria-pressed={mapView === "flat"}
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+              mapView === "flat"
+                ? "bg-blue-600 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MapIcon size={15} />
+            Flat 2D
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapView("globe")}
+            aria-pressed={mapView === "globe"}
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+              mapView === "globe"
+                ? "bg-blue-600 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Globe size={15} />
+            3D Globe
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {selectedGroup && (
@@ -2076,4 +2149,5 @@ WorldMapLeaflet.propTypes = {
   fallbackCountry: PropTypes.string,
   reportLabel: PropTypes.string,
   reportType: PropTypes.string,
+  enableViewToggle: PropTypes.bool,
 };

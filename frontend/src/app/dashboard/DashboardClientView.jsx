@@ -246,6 +246,7 @@ export default function DashboardClientView({ session }) {
           mode="summary"
           countryData={mapData}
           title="Overall IP Geo Distribution"
+          enableViewToggle
         />
       </div>
 
