@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/copy-cesium-assets.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/copy-cesium-assets.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "cesium": "^1.146.0",
     "flag-icons": "^7.5.0",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",

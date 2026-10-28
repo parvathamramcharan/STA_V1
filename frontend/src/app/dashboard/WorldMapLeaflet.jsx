@@ -1,9 +1,25 @@
 "use client";
-import { Fragment, useState, useEffect, useMemo } from "react";
+import {
+  Fragment,
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { useMap } from "react-leaflet";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Search, Globe, MapPin, Radio, Activity, Zap } from "lucide-react";
+import {
+  X,
+  Search,
+  Globe,
+  Map as MapIcon,
+  MapPin,
+  Radio,
+  Activity,
+  Zap,
+} from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.Default.css";
 import "react-leaflet-cluster/dist/assets/MarkerCluster.css";
@@ -12,22 +28,28 @@ import {
   getCountryDisplayName,
   getCountryCode,
 } from "@/constants/countryMapping";
+import {
+  getCountryColor,
+  getCountryMarkerColor,
+  getCountryDataForFeature,
+  INDIA_LAND_COLOR,
+} from "./countryColors";
+import {
+  buildSummaryMarkerGroups,
+} from "./summaryMarkerColors";
 import PropTypes from "prop-types";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
   { ssr: false },
 );
+const CesiumGlobe = dynamic(() => import("./CesiumGlobe"), { ssr: false });
 const ZoomControl = dynamic(
   () => import("react-leaflet").then((mod) => mod.ZoomControl),
   { ssr: false },
 );
 const Marker = dynamic(
   () => import("react-leaflet").then((mod) => mod.Marker),
-  { ssr: false },
-);
-const CircleMarker = dynamic(
-  () => import("react-leaflet").then((mod) => mod.CircleMarker),
   { ssr: false },
 );
 const Tooltip = dynamic(
@@ -103,20 +125,18 @@ function PcapDrillDownController({ focusRequest, mode }) {
 
 function EnsureTopPane() {
   const map = useMap();
-  useEffect(() => {
-    if (!map) return;
-    try {
-      if (!map.getPane("geoPane")) {
-        const geo = map.createPane("geoPane");
-        geo.style.zIndex = "300";
-        geo.style.pointerEvents = "auto";
-      }
-      if (!map.getPane("topPane")) {
-        const p = map.createPane("topPane");
-        p.style.zIndex = "700";
-        p.style.pointerEvents = "auto";
-      }
-    } catch (e) {}
+  useLayoutEffect(() => {
+    const geoPane = map.getPane("geoPane") || map.createPane("geoPane");
+    geoPane.style.zIndex = "300";
+    geoPane.style.pointerEvents = "auto";
+
+    const indiaPane = map.getPane("indiaPane") || map.createPane("indiaPane");
+    indiaPane.style.zIndex = "350";
+    indiaPane.style.pointerEvents = "auto";
+
+    const topPane = map.getPane("topPane") || map.createPane("topPane");
+    topPane.style.zIndex = "700";
+    topPane.style.pointerEvents = "auto";
   }, [map]);
   return null;
 }
@@ -593,16 +613,11 @@ const getPcapPointStyle = (count) => {
   return SIGNAL_COLORS.cool;
 };
 
-const SUMMARY_MARKER_COLOR = "#ff7f50";
-
 const REPORT_MARKER_COLORS = {
   fill: "#2563eb",
   shadow: "rgba(30, 64, 175, 0.30)",
   hoverShadow: "rgba(30, 64, 175, 0.38)",
 };
-
-const SUMMARY_MARKER_SIZE = 11;
-const getSummaryMarkerSize = () => SUMMARY_MARKER_SIZE;
 
 const CONTINENT_LABELS = [
   {
@@ -734,13 +749,24 @@ const sanitizeWorldGeoJSON = (geojson) => {
 };
 
 const SUMMARY_LAND_FILL = "#f2efe9";
-const SUMMARY_BORDER_COLOR = "#cfcabd";
+const SUMMARY_BORDER_COLOR = "#ddebeea2";
 
 const getSummaryLandStyle = () => ({
   color: SUMMARY_BORDER_COLOR,
   weight: 0.8,
   opacity: 1,
   fillColor: SUMMARY_LAND_FILL,
+  fillOpacity: 1,
+  lineCap: "round",
+  lineJoin: "round",
+  smoothFactor: 0,
+});
+
+const getIndiaBoundaryStyle = (fillColor = SUMMARY_LAND_FILL) => ({
+  color: SUMMARY_BORDER_COLOR,
+  weight: 0.8,
+  opacity: 1,
+  fillColor,
   fillOpacity: 1,
   lineCap: "round",
   lineJoin: "round",
@@ -764,12 +790,7 @@ const formatCompactCount = (count) => {
 const normalizeForMatch = (name) =>
   (name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-const countryNamesMatch = (a, b) => {
-  const na = normalizeForMatch(a);
-  const nb = normalizeForMatch(b);
-  if (!na || !nb) return false;
-  return na === nb || na.includes(nb) || nb.includes(na);
-};
+const getMappedCountryName = (name) => getCountryDisplayName(name || "Unknown");
 
 const GEOJSON_NAME_KEYS = [
   "ADMIN",
@@ -783,36 +804,8 @@ const GEOJSON_NAME_KEYS = [
   "name_en",
 ];
 
-const getFeatureNameCandidates = (properties) => {
-  if (!properties) return [];
-  return GEOJSON_NAME_KEYS.map((key) => properties[key]).filter(Boolean);
-};
-
-const buildCountryDataIndex = (countryData) => {
-  const exact = new Map();
-  (countryData || []).forEach((entry) => {
-    const key = normalizeForMatch(entry.name);
-    if (key) exact.set(key, entry);
-  });
-  return { exact, list: countryData || [] };
-};
-
-const getMappedCountryName = (name) => getCountryDisplayName(name || "Unknown");
-
-const findCountryMatch = (featureProperties, countryIndex) => {
-  const candidates = getFeatureNameCandidates(featureProperties);
-  for (const candidate of candidates) {
-    const key = normalizeForMatch(candidate);
-    if (countryIndex.exact.has(key)) return countryIndex.exact.get(key);
-  }
-  for (const candidate of candidates) {
-    const match = countryIndex.list.find((entry) =>
-      countryNamesMatch(entry.name, candidate),
-    );
-    if (match) return match;
-  }
-  return null;
-};
+const getFeatureNameCandidates = (properties) =>
+  GEOJSON_NAME_KEYS.map((key) => properties?.[key]).filter(Boolean);
 
 const GEOJSON_ISO2_KEYS = [
   "ISO_A2_EH",
@@ -947,14 +940,17 @@ export function WorldMapLeaflet({
   fallbackCountry,
   reportLabel,
   reportType,
+  enableViewToggle = false,
 }) {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [hoveredCountry, setHoveredCountry] = useState(null);
   const [L, setL] = useState(null);
   const [indiaBorder, setIndiaBorder] = useState(null);
   const [worldCountries, setWorldCountries] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(2);
   const [viewport, setViewport] = useState(null);
+  const [mapView, setMapView] = useState("flat");
 
   useEffect(() => {
     import("leaflet").then((leaflet) => {
@@ -1079,55 +1075,62 @@ export function WorldMapLeaflet({
     });
   }, [L, mode, pcapMapPoints, zoomLevel]);
 
-  const countryDataIndex = useMemo(
-    () => buildCountryDataIndex(countryData),
-    [countryData],
-  );
   const countryIsoIndex = useMemo(
     () => buildCountryIsoIndex(worldCountries),
     [worldCountries],
   );
-
-  const indiaRenderer = useMemo(() => (L ? L.svg() : null), [L]);
-  const worldRenderer = useMemo(() => (L ? L.svg() : null), [L]);
-
-  const summaryMarkerItems = useMemo(() => {
-    if (!L || mode !== "summary") return [];
-
-    return countryData
-      .filter((entry) => {
-        const lat = Number(entry.latitude);
-        const lng = Number(entry.longitude);
-        return (
-          (Number(entry.count) || 0) > 0 &&
-          Number.isFinite(lat) &&
-          Number.isFinite(lng)
-        );
-      })
-      .map((entry) => {
-        const lat = Number(entry.latitude);
-        const lng = Number(entry.longitude);
-        const style = { marker: SUMMARY_MARKER_COLOR };
-        const markerSize = getSummaryMarkerSize(entry.count);
-        const iso2 = getCountryIso2(entry.name, countryIsoIndex);
-
-        const blinkDelay = (Math.abs(Math.round(lat * 3 + lng * 7)) % 36) / 10;
-
-        return {
-          entry,
-          iso2,
-          lat,
-          lng,
-          icon: L.divIcon({
-            html: `<div class="summary-dot" style="width:${markerSize}px;height:${markerSize}px;background:${style.marker};--dot-glow:${style.marker};--blink-delay:${blinkDelay}s;"></div>`,
-            className: "",
-            iconSize: [markerSize, markerSize],
-            iconAnchor: [markerSize / 2, markerSize / 2],
-          }),
-        };
+  const handleGlobeCountrySelect = useCallback(
+    (entry) => {
+      const name = entry?.name || "Unknown";
+      setSelectedCountry({
+        name: getMappedCountryName(name),
+        iso2: getCountryIso2(name, countryIsoIndex),
+        count: entry?.count || 0,
+        captures: entry?.captures_seen ?? entry?.captures ?? 0,
+        packets: entry?.packets || 0,
       });
-  }, [L, mode, countryData, countryIsoIndex]);
+    },
+    [countryIsoIndex],
+  );
+  const handleFlatCountrySelect = useCallback(
+    (properties, fallbackName) => {
+      const country = getCountryDataForFeature(properties, countryData);
+      const name =
+        country?.name ||
+        fallbackName ||
+        getFeatureNameCandidates(properties)[0] ||
+        "Unknown";
+      setSelectedCountry({
+        name: getMappedCountryName(name),
+        iso2: getCountryIso2(name, countryIsoIndex) || getFeatureIso2(properties),
+        count: country?.count || 0,
+        captures: country?.captures_seen ?? country?.captures ?? 0,
+        packets: country?.packets || 0,
+      });
+    },
+    [countryData, countryIsoIndex],
+  );
 
+  const indiaBoundaryRenderer = useMemo(
+    () => (L ? L.svg({ pane: "indiaPane" }) : null),
+    [L],
+  );
+  const worldRenderer = useMemo(
+    () => (L ? L.svg({ pane: "geoPane" }) : null),
+    [L],
+  );
+
+  const summaryMarkerEntries = useMemo(
+    () =>
+      mode === "summary"
+        ? countryData.filter((entry) => (Number(entry.count) || 0) > 0)
+        : [],
+    [countryData, mode],
+  );
+  const summaryMarkerGroups = useMemo(
+    () => buildSummaryMarkerGroups(),
+    [],
+  );
   const initialCenter = DEFAULT_MAP_CENTER;
 
   const initialZoom = mode === "summary" ? 2 : 2.2;
@@ -1140,31 +1143,44 @@ export function WorldMapLeaflet({
       ? "w-full h-full relative z-0 overflow-hidden bg-card [&_.leaflet-container]:!bg-[var(--leaflet-bg)] [&_.continent-label-marker]:!bg-transparent [&_.continent-label-marker]:!border-0 [&_.continent-label-marker]:!shadow-none [&_.leaflet-tooltip]:!bg-card [&_.leaflet-tooltip]:!backdrop-blur-none [&_.leaflet-tooltip]:!border [&_.leaflet-tooltip]:!border-theme [&_.leaflet-tooltip]:!rounded-xl [&_.leaflet-tooltip]:!shadow-[0_20px_50px_rgba(15,23,42,0.18)] [&_.leaflet-tooltip]:!p-0 [&_.leaflet-tooltip]:!text-foreground [&_.leaflet-tooltip]:overflow-hidden [&_.leaflet-grab]:!cursor-pointer [&_.leaflet-dragging_.leaflet-grab]:!cursor-grabbing"
       : "w-full h-full relative z-0 rounded-[24px] overflow-hidden border border-theme/70 transition-all duration-300 bg-card shadow-[0_18px_50px_rgba(15,23,42,0.16)] [&_.leaflet-container]:!bg-[var(--leaflet-bg)] [&_.continent-label-marker]:!bg-transparent [&_.continent-label-marker]:!border-0 [&_.continent-label-marker]:!shadow-none [&_.leaflet-tooltip]:!bg-card [&_.leaflet-tooltip]:!backdrop-blur-none [&_.leaflet-tooltip]:!border [&_.leaflet-tooltip]:!border-theme [&_.leaflet-tooltip]:!rounded-xl [&_.leaflet-tooltip]:!shadow-[0_20px_50px_rgba(15,23,42,0.18)] [&_.leaflet-tooltip]:!p-0 [&_.leaflet-tooltip]:!text-foreground [&_.leaflet-tooltip]:overflow-hidden [&_.leaflet-grab]:!cursor-pointer [&_.leaflet-dragging_.leaflet-grab]:!cursor-grabbing";
 
-  if (!L)
+  const showGlobe = enableViewToggle && mapView === "globe";
+
+  if (!L && !showGlobe)
     return (
       <div className="w-full h-full bg-slate-900 animate-pulse rounded-none" />
     );
 
   return (
     <div className={mapShellClassName} style={mapContainerStyle}>
-      <MapContainer
-        center={initialCenter}
-        zoom={initialZoom}
-        minZoom={2}
-        maxZoom={12}
-        style={{ height: "100%", width: "100%", background: "transparent" }}
-        zoomControl={false}
-        attributionControl={false}
-        keyboard={false}
-        worldCopyJump={true}
-        preferCanvas={true}
-        maxBounds={[
-          [-90, -180],
-          [90, 180],
-        ]}
-        maxBoundsViscosity={1.0}
-      >
+      {showGlobe ? (
+        <CesiumGlobe
+          worldCountries={worldCountries}
+          indiaBorder={indiaBorder}
+          countryData={countryData}
+          summaryMarkerGroups={summaryMarkerGroups}
+          onCountrySelect={handleGlobeCountrySelect}
+        />
+      ) : (
+        <>
+          <MapContainer
+            center={initialCenter}
+            zoom={initialZoom}
+            minZoom={2}
+            maxZoom={12}
+            style={{ height: "100%", width: "100%", background: "transparent" }}
+            zoomControl={false}
+            attributionControl={false}
+            keyboard={false}
+            worldCopyJump={true}
+            preferCanvas={true}
+            maxBounds={[
+              [-90, -180],
+              [90, 180],
+            ]}
+            maxBoundsViscosity={1.0}
+          >
         <MapResetControl L={L} center={initialCenter} zoom={initialZoom} />
+        <EnsureTopPane />
 
         {worldCountries && worldRenderer && (
           <GeoJSON
@@ -1172,23 +1188,58 @@ export function WorldMapLeaflet({
             data={worldCountries}
             renderer={worldRenderer}
             pane="geoPane"
+            eventHandlers={{
+              mousemove: (event) => {
+                if (mode !== "summary") return;
+                const properties =
+                  event.layer?.feature?.properties ||
+                  event.target?.feature?.properties ||
+                  {};
+                const country = getCountryDataForFeature(
+                  properties,
+                  countryData,
+                );
+                const name =
+                  country?.name ||
+                  getFeatureNameCandidates(properties)[0] ||
+                  "Unknown";
+                setHoveredCountry({
+                  name: getMappedCountryName(name),
+                  x: event.containerPoint?.x ?? 0,
+                  y: event.containerPoint?.y ?? 0,
+                });
+              },
+              mouseout: () => setHoveredCountry(null),
+              click: (event) => {
+                if (mode !== "summary") return;
+                handleFlatCountrySelect(
+                  event.layer?.feature?.properties ||
+                    event.target?.feature?.properties ||
+                    {},
+                );
+              },
+            }}
             style={(feature) => {
               const props =
                 feature && feature.properties ? feature.properties : {};
-              const iso = (props.iso_a3 || props.ISO_A3 || props.adm0_a3 || "")
-                .toString()
-                .toUpperCase();
+              const isIndia =
+                (props.iso_a3 || props.ISO_A3 || props.adm0_a3 || "")
+                  .toString()
+                  .toUpperCase() === "IND";
+              const fillColor =
+                mode === "summary"
+                  ? getCountryMarkerColor(
+                      props,
+                      countryData,
+                      summaryMarkerGroups,
+                    ) || getCountryColor(props)
+                  : SUMMARY_LAND_FILL;
 
-              if (iso === "IND") {
-                return {
-                  color: "transparent",
-                  weight: 0,
-                  fillOpacity: 0,
-                  opacity: 0,
-                };
-              }
-
-              return getSummaryLandStyle();
+              return {
+                ...getSummaryLandStyle(),
+                ...(isIndia ? { weight: 0 } : {}),
+                fillColor,
+              };
             }}
           />
         )}
@@ -1198,8 +1249,6 @@ export function WorldMapLeaflet({
           labels={CONTINENT_LABELS}
           zoomLevel={zoomLevel}
         />
-        <EnsureTopPane />
-
         <MapZoomListener setZoomLevel={setZoomLevel} />
         <MapViewportListener setViewport={setViewport} />
         <PcapDrillDownController
@@ -1207,18 +1256,41 @@ export function WorldMapLeaflet({
           mode={mode}
         />
 
-        {/* Accurate India layer using the dedicated
-            full-resolution India border rather than the coarser
-            world-countries.json India polygon. It uses the same flat,
-            static land style as every other country - no hover state,
-            while only the summary country's marker opens a detail panel. */}
-        {indiaBorder && indiaRenderer && (
+        {/* The custom boundary shape covers the coarse Pakistan-side line and
+            redraws India's precise outline in the standard country-border style. */}
+        {indiaBorder && indiaBoundaryRenderer && (
           <GeoJSON
-            key={`india-flat-${mode}`}
+            key={`india-border-${mode}`}
             data={indiaBorder}
-            renderer={indiaRenderer}
-            pane="geoPane"
-            style={getSummaryLandStyle()}
+            renderer={indiaBoundaryRenderer}
+            pane="indiaPane"
+            eventHandlers={{
+              mousemove: (event) => {
+                if (mode !== "summary") return;
+                setHoveredCountry({
+                  name: getMappedCountryName("India"),
+                  x: event.containerPoint?.x ?? 0,
+                  y: event.containerPoint?.y ?? 0,
+                });
+              },
+              mouseout: () => setHoveredCountry(null),
+              click: () => {
+                if (mode === "summary") {
+                  handleFlatCountrySelect({ ADMIN: "India" }, "India");
+                }
+              },
+            }}
+            style={() =>
+              getIndiaBoundaryStyle(
+                mode === "summary"
+                  ? getCountryMarkerColor(
+                      { ADMIN: "India" },
+                      countryData,
+                      summaryMarkerGroups,
+                    ) || INDIA_LAND_COLOR
+                  : SUMMARY_LAND_FILL,
+              )
+            }
           />
         )}
 
@@ -1439,30 +1511,7 @@ export function WorldMapLeaflet({
                   </Marker>
                 );
               })
-            : mode === "summary"
-              ? summaryMarkerItems.map(({ entry, iso2, lat, lng, icon }) => {
-                  const displayName = getMappedCountryName(entry.name);
-                  return (
-                    <Marker
-                      pane="topPane"
-                      key={`summary-${entry.name}`}
-                      position={[lat, lng]}
-                      icon={icon}
-                      eventHandlers={{
-                        click: () =>
-                          setSelectedCountry({
-                            name: displayName,
-                            iso2,
-                            count: entry.count || 0,
-                            captures:
-                              entry.captures_seen ?? entry.captures ?? 0,
-                            packets: entry.packets || 0,
-                          }),
-                      }}
-                    />
-                  );
-                })
-              : null}
+            : null}
 
         {mode === "pcap" && L && (
           <Marker
@@ -1478,9 +1527,23 @@ export function WorldMapLeaflet({
             interactive={false}
           />
         )}
-      </MapContainer>
+          </MapContainer>
 
-      <div className="map-atmosphere-vignette" aria-hidden="true" />
+          {mode === "summary" && hoveredCountry && (
+            <div
+              className="pointer-events-none absolute z-[1100] max-w-[min(15rem,calc(100%-1rem))] truncate rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-xl"
+              style={{
+                left: hoveredCountry.x + 14,
+                top: hoveredCountry.y + 14,
+              }}
+            >
+              {hoveredCountry.name}
+            </div>
+          )}
+
+          <div className="map-atmosphere-vignette" aria-hidden="true" />
+        </>
+      )}
 
       {title && (
         <div className="absolute top-6 left-6 z-[1000] flex flex-col gap-2 pointer-events-none">
@@ -1497,6 +1560,32 @@ export function WorldMapLeaflet({
               {title}
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {mode === "summary" && !showGlobe && (
+        <div
+          className="absolute bottom-5 right-16 z-[1000] w-44 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur sm:right-20 sm:w-52"
+          aria-label="Country IP count groups"
+        >
+          <div className="mb-1.5 text-[10px] font-semibold text-slate-600 sm:text-xs">
+            Country IP counts
+          </div>
+          <div className="flex flex-col gap-1">
+            {summaryMarkerGroups.map((group) => (
+              <div
+                key={group.id}
+                className="flex items-center gap-2 text-[9px] text-slate-600 sm:text-[10px]"
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ backgroundColor: group.color }}
+                  aria-hidden="true"
+                />
+                <span>{group.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1523,6 +1612,41 @@ export function WorldMapLeaflet({
           </div>
         </motion.div>
       </div>
+
+      {enableViewToggle && mode === "summary" && (
+        <div
+          className="absolute bottom-5 left-5 z-[1000] inline-flex rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur"
+          role="group"
+          aria-label="Map view"
+        >
+          <button
+            type="button"
+            onClick={() => setMapView("flat")}
+            aria-pressed={mapView === "flat"}
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+              mapView === "flat"
+                ? "bg-blue-600 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <MapIcon size={15} />
+            Flat 2D
+          </button>
+          <button
+            type="button"
+            onClick={() => setMapView("globe")}
+            aria-pressed={mapView === "globe"}
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${
+              mapView === "globe"
+                ? "bg-blue-600 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            <Globe size={15} />
+            3D Globe
+          </button>
+        </div>
+      )}
 
       <AnimatePresence>
         {selectedGroup && (
@@ -1732,24 +1856,6 @@ export function WorldMapLeaflet({
           box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
           transition: all 0.2s ease-out;
           cursor: pointer;
-        }
-        .summary-dot {
-          position: relative;
-          border-radius: 50%;
-          cursor: pointer;
-          border: 1.5px solid rgba(255, 255, 255, 0.9);
-          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
-          transition:
-            transform 0.15s cubic-bezier(0.2, 0.9, 0.2, 1),
-            box-shadow 0.15s ease;
-        }
-        .summary-dot:hover {
-          transform: scale(2) !important;
-          box-shadow:
-            0 0 0 4px rgba(255, 255, 255, 0.5),
-            0 0 16px 4px var(--dot-glow, transparent),
-            0 4px 12px rgba(15, 23, 42, 0.4) !important;
-          z-index: 1000 !important;
         }
         .custom-dot-marker:hover {
           transform: scale(3) !important;
@@ -2076,4 +2182,5 @@ WorldMapLeaflet.propTypes = {
   fallbackCountry: PropTypes.string,
   reportLabel: PropTypes.string,
   reportType: PropTypes.string,
+  enableViewToggle: PropTypes.bool,
 };
