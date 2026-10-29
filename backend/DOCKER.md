@@ -17,6 +17,13 @@ Access tokens are valid for one hour by default (`JWT_EXPIRY_SECONDS=3600` in
 `backend/.env`). Refresh-token lifetime is configured separately with
 `JWT_REFRESH_EXPIRY_SECONDS`.
 
+The frontend marks authentication cookies `Secure` by default in production,
+so serve it over HTTPS. For a trusted, isolated LAN deployment that is
+temporarily accessed over plain HTTP, set `AUTH_COOKIE_SECURE=false` in
+`frontend/.env` and recreate the frontend container. This sends session
+cookies without transport encryption; do not use this setting on an untrusted
+network or internet-facing deployment.
+
 Set `ELASTIC_USER` and `ELASTIC_PASSWORD` in `backend/.env` if the remote
 Elasticsearch server requires basic authentication. Alternatively, set
 `ES_API_KEY`. Configure `ES_HOST` if the server address differs.

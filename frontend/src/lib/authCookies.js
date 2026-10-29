@@ -3,9 +3,21 @@ import { NextResponse } from "next/server";
 export const ACCESS_TOKEN_COOKIE = "access_token";
 export const REFRESH_TOKEN_COOKIE = "refresh_token";
 
+const secureCookieSetting = process.env.AUTH_COOKIE_SECURE;
+if (
+  secureCookieSetting !== undefined &&
+  secureCookieSetting !== "true" &&
+  secureCookieSetting !== "false"
+) {
+  throw new Error('AUTH_COOKIE_SECURE must be "true" or "false"');
+}
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure:
+    secureCookieSetting === undefined
+      ? process.env.NODE_ENV === "production"
+      : secureCookieSetting === "true",
   sameSite: "strict",
   path: "/",
 };

@@ -1,3 +1,86 @@
+# services:
+#   redis:
+#     image: redis:7-alpine
+#     restart: unless-stopped
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 10s
+#       timeout: 3s
+#       retries: 5
+
+#   api:
+#     build:
+#       context: ./backend
+#       dockerfile: Dockerfile
+#     image: network-analysis-api:local
+#     restart: unless-stopped
+#     env_file:
+#       - ./backend/.env
+#     environment:
+#       REDIS_URL: redis://redis:6379/0
+#       AUTH_REVOCATION_DB: /data/token_revocations.sqlite3
+#       PYTHONUNBUFFERED: "1"
+#     ports:
+#       - "5000:5000"
+#     volumes:
+#       - token-revocations:/data
+#       - pdf-jobs:/tmp/pdf_jobs
+#     depends_on:
+#       redis:
+#         condition: service_healthy
+#     healthcheck:
+#       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:5000/api/health"]
+#       interval: 30s
+#       timeout: 10s
+#       start_period: 40s
+#       retries: 3
+
+#   celery-worker:
+#     image: network-analysis-api:local
+#     restart: unless-stopped
+#     user: "0:0"
+#     command:
+#       ["celery", "-A", "tasks:celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+#     env_file:
+#       - ./backend/.env
+#     environment:
+#       REDIS_URL: redis://redis:6379/0
+#       PYTHONUNBUFFERED: "1"
+#     volumes:
+#       - pdf-jobs:/tmp/pdf_jobs
+#     depends_on:
+#       redis:
+#         condition: service_healthy
+#       api:
+#         condition: service_started
+
+#   frontend:
+#     build:
+#       context: ./frontend
+#       dockerfile: Dockerfile
+#     image: network-analysis-frontend:local
+#     restart: unless-stopped
+#     env_file:
+#       - ./frontend/.env
+#     environment:
+#       NODE_ENV: production
+#       PORT: "3000"
+#       HOSTNAME: 0.0.0.0
+#       BACKEND_URL: http://api:5000/api
+#     ports:
+#       - "80:3000"
+#     depends_on:
+#       api:
+#         condition: service_started
+
+# volumes:
+#   token-revocations:
+#     external: true
+#     name: backend_token-revocations
+#   pdf-jobs:
+#     external: true
+#     name: backend_pdf-jobs
+
 services:
   redis:
     image: redis:7-alpine
@@ -9,10 +92,7 @@ services:
       retries: 5
 
   api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    image: network-analysis-api:local
+    image: backend:v1
     restart: unless-stopped
     env_file:
       - ./backend/.env
@@ -36,7 +116,7 @@ services:
       retries: 3
 
   celery-worker:
-    image: network-analysis-api:local
+    image:  backend:v1
     restart: unless-stopped
     user: "0:0"
     command:
@@ -55,10 +135,7 @@ services:
         condition: service_started
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: network-analysis-frontend:local
+    image: frontend:v1
     restart: unless-stopped
     env_file:
       - ./frontend/.env
