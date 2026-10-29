@@ -20,6 +20,7 @@ const GLOBE_DARK_BACKGROUND_COLOR = "#050B14";
 const GLOBE_OCEAN_COLOR = "#8FB9CC";
 const GLOBE_COUNTRY_BORDER_COLOR = "#64748B";
 const INDIA_BORDER_COLOR = "#64748B";
+let cesiumLoadPromise;
 const NAME_KEYS = [
   "ADMIN",
   "admin",
@@ -31,6 +32,34 @@ const NAME_KEYS = [
   "sovereignt",
   "name_en",
 ];
+
+const loadCesium = () => {
+  if (window.Cesium) return Promise.resolve(window.Cesium);
+
+  if (!cesiumLoadPromise) {
+    cesiumLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "/cesium/Cesium.js";
+      script.async = true;
+      script.onload = () => {
+        if (window.Cesium) {
+          resolve(window.Cesium);
+          return;
+        }
+
+        cesiumLoadPromise = null;
+        reject(new Error("Cesium bundle loaded without exposing its API."));
+      };
+      script.onerror = () => {
+        cesiumLoadPromise = null;
+        reject(new Error(`Failed to load Cesium bundle: ${script.src}`));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  return cesiumLoadPromise;
+};
 
 const normalizeCountryName = (name) =>
   String(name || "")
@@ -82,7 +111,7 @@ export default function CesiumGlobe({
 
     const createGlobe = async () => {
       try {
-        const Cesium = await import("cesium");
+        const Cesium = await loadCesium();
         if (!active || !containerRef.current) return;
 
         cesiumRef.current = Cesium;

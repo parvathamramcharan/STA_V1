@@ -20,9 +20,14 @@ const fetchWithTimeout = async (url, options = {}) => {
   }
 };
 //done
-export async function fetchPcapSet(setId, accessToken) {
+export async function fetchPcapSet(setId, accessToken, query = {}) {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/pcaps/set/${setId}`, {
+    const searchParams = new URLSearchParams(
+      Object.entries(query).filter(([, value]) => value !== undefined && value !== ""),
+    );
+    const queryString = searchParams.toString();
+    const url = `${BASE_URL}/pcaps/set/${setId}${queryString ? `?${queryString}` : ""}`;
+    const res = await fetchWithTimeout(url, {
       cache: "no-store",
       timeout: 30000,
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},

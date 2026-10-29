@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useEffect, useCallback, memo, useRef } from "react";
 import {
   Search,
   Filter,
@@ -36,6 +36,7 @@ import {
   fetchPcapDetails,
   fetchPcapMap,
   triggerPcapExport,
+  fetchPcapSet,
 } from "./apiService";
 import PropTypes from "prop-types";
 import { DashboardReports } from "../../dashboard/DashboardReports";
@@ -266,15 +267,24 @@ export default function PcapClientView({ setId, initialResponse, session }) {
   // console.log("Initial response received:", initialResponse);
   // console.log("session:", session);
   const [pcapMode, setPcapMode] = useState(true);
-  const initialData = initialResponse.data || [];
-  const stats = initialResponse.repository_stats || {};
+  const [pcapResponse, setPcapResponse] = useState(initialResponse);
+  const initialData = pcapResponse.data || [];
+  const stats = pcapResponse.repository_stats || {};
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("Random");
   const [sortOrder, setSortOrder] = useState("desc");
   const [randomSeed, setRandomSeed] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const [isLoadingPcapPage, setIsLoadingPcapPage] = useState(false);
+  const itemsPerPage = 50;
+  const totalPcapCount = pcapResponse.pagination?.total ?? initialData.length;
+  const totalPages = Math.max(
+    1,
+    pcapResponse.pagination?.total_pages ??
+      Math.ceil(totalPcapCount / itemsPerPage),
+  );
+  const firstPageRequest = useRef(true);
 
   // Optimized Cache Matrix
   const [dataCache, setDataCache] = useState({});
@@ -331,6 +341,54 @@ export default function PcapClientView({ setId, initialResponse, session }) {
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
   const [apiError, setApiError] = useState(null);
+
+  useEffect(() => {
+    if (firstPageRequest.current) {
+      firstPageRequest.current = false;
+      return;
+    }
+
+    let active = true;
+    const timeout = setTimeout(async () => {
+      setIsLoadingPcapPage(true);
+      try {
+        const response = await fetchPcapSet(setId, null, {
+          page: currentPage,
+          per_page: itemsPerPage,
+          search,
+          date_from: dateFrom,
+          date_to: dateTo,
+          sort_by: filter.toLowerCase().replaceAll(" ", "_"),
+          sort_order: sortOrder,
+          random_seed: randomSeed,
+        });
+        if (active) {
+          setPcapResponse(response);
+          setApiError(null);
+        }
+      } catch (error) {
+        console.error("Failed to load PCAP page:", error);
+        if (active) setApiError("Could not load PCAPs. Please retry.");
+      } finally {
+        if (active) setIsLoadingPcapPage(false);
+      }
+    }, search ? 300 : 0);
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [
+    setId,
+    currentPage,
+    itemsPerPage,
+    search,
+    dateFrom,
+    dateTo,
+    filter,
+    sortOrder,
+    randomSeed,
+  ]);
 
   const handleCardClick = useCallback((pcapId, isSelected) => {
     const url = new URL(window.location.href);
@@ -531,77 +589,13 @@ export default function PcapClientView({ setId, initialResponse, session }) {
     }
   }, []);
 
-  const sortedData = useMemo(() => {
-    const filteredData = initialData.filter((item) =>
-      item.filename.toLowerCase().includes(search.toLowerCase()),
-    );
-
-    // Apply date range filtering when set
-    const filteredAndDated = filteredData.filter((item) => {
-      if (!dateFrom && !dateTo) return true;
-
-      const itemStartDate = item.start_time
-        ? item.start_time.slice(0, 10)
-        : null;
-      const itemEndDate = item.end_time ? item.end_time.slice(0, 10) : null;
-      if (!itemStartDate && !itemEndDate) return false;
-
-      const fromDate = dateFrom || null;
-      const toDate = dateTo || null;
-
-      const fromOK =
-        !fromDate ||
-        (itemStartDate
-          ? itemStartDate >= fromDate
-          : itemEndDate
-            ? itemEndDate >= fromDate
-            : false);
-      const toOK =
-        !toDate ||
-        (itemEndDate
-          ? itemEndDate <= toDate
-          : itemStartDate
-            ? itemStartDate <= toDate
-            : false);
-
-      return fromOK && toOK;
-    });
-
-    const result = [...filteredAndDated];
-    const orderMultiplier = sortOrder === "asc" ? 1 : -1;
-
-    if (filter === "Random") {
-      result.sort((a, b) => {
-        const seedA =
-          (Number.parseInt(a.pcap_id.substring(0, 4), 16) || 0) + randomSeed;
-        const seedB =
-          (Number.parseInt(b.pcap_id.substring(0, 4), 16) || 0) + randomSeed;
-        return Math.sin(seedA) - Math.sin(seedB);
-      });
-    }
-    if (filter === "Size")
-      result.sort((a, b) => (a.size - b.size) * orderMultiplier);
-    if (filter === "Duration")
-      result.sort((a, b) => (a.duration - b.duration) * orderMultiplier);
-    if (filter === "Packets")
-      result.sort((a, b) => (a.packets - b.packets) * orderMultiplier);
-    if (filter === "Date") {
-      result.sort((a, b) => {
-        const aDate = a.start_time || a.end_time || "";
-        const bDate = b.start_time || b.end_time || "";
-        return (new Date(aDate) - new Date(bDate)) * orderMultiplier;
-      });
-    }
-    if (filter === "External IPs")
-      result.sort((a, b) => (a.ip_count - b.ip_count) * orderMultiplier);
-
-    return result;
-  }, [initialData, search, dateFrom, dateTo, filter, sortOrder, randomSeed]);
+  const sortedData = initialData;
 
   const handleFilterClick = (label) => {
     if (label === "Random") {
       setFilter("Random");
       setRandomSeed((prev) => prev + 1);
+      setCurrentPage(1);
       return;
     }
 
@@ -655,7 +649,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
               {setId == 2 && "DNS Sinkhole Packets"}
               {setId == 3 && "IP Sinkhole Packets"}
               <span className="text-amber-500 text-sm font-sans  bg-amber-500/10 px-3 py-1 rounded-none border border-amber-500/20">
-                {stats.total_pcaps || initialData.length} Files
+                {totalPcapCount} Files
               </span>
               {stats.repository_size && (
                 <span className="text-blue-500 text-sm font-medium bg-blue-500/10 px-3 py-1 rounded-none border border-blue-500/20">
@@ -771,16 +765,21 @@ export default function PcapClientView({ setId, initialResponse, session }) {
             </div>
             <div className="px-4 text-[11px] font-black text-foreground uppercase tracking-widest border-l border-theme ml-2">
               <span className="text-blue-600">
-                {(currentPage - 1) * itemsPerPage + 1}-
-                {Math.min(currentPage * itemsPerPage, sortedData.length)}
+                {totalPcapCount === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}-
+                {Math.min(currentPage * itemsPerPage, totalPcapCount)}
               </span>{" "}
               <span className=" px-1 normal-case font-sans">of</span>{" "}
               <span className="text-foreground fomt-serif">
-                {sortedData.length}
+                {totalPcapCount}
               </span>{" "}
               PCAPs
             </div>
           </div>
+          {apiError && (
+            <p className="px-3 text-sm text-red-600" role="alert">
+              {apiError}
+            </p>
+          )}
 
           <div
             className={`transition-all duration-500 ease-in-out overflow-y-auto pr-2 pb-2 overflow-x-hidden custom-scrollbar ${
@@ -796,12 +795,7 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                 style={{ contain: "layout paint" }}
               >
                 <AnimatePresence mode="popLayout" initial={false}>
-                  {sortedData
-                    .slice(
-                      (currentPage - 1) * itemsPerPage,
-                      currentPage * itemsPerPage,
-                    )
-                    .map((file, idx) => {
+                  {sortedData.map((file) => {
                       const isSelected = selectedFile?.pcap_id === file.pcap_id;
 
                       return (
@@ -820,13 +814,13 @@ export default function PcapClientView({ setId, initialResponse, session }) {
             </LayoutGroup>
 
             {/* Pagination UI */}
-            {sortedData.length > itemsPerPage && (
+            {totalPcapCount > itemsPerPage && (
               <div className="flex items-center justify-center gap-2 mt-8 mb-4">
                 <button
                   onClick={() =>
                     setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
-                  disabled={currentPage === 1}
+                  disabled={currentPage === 1 || isLoadingPcapPage}
                   className={`p-2 rounded-lg border transition-all ${
                     currentPage === 1
                       ? "text-slate-300 border-slate-100 cursor-not-allowed"
@@ -837,19 +831,18 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                 </button>
 
                 <div className="flex items-center gap-1">
-                  {Array.from({
-                    length: Math.ceil(sortedData.length / itemsPerPage),
-                  }).map((_, i) => {
+                  {Array.from({ length: totalPages }).map((_, i) => {
                     const pageNum = i + 1;
                     if (
                       pageNum === 1 ||
-                      pageNum === Math.ceil(sortedData.length / itemsPerPage) ||
+                      pageNum === totalPages ||
                       (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
                     ) {
                       return (
                         <button
                           key={pageNum}
                           onClick={() => setCurrentPage(pageNum)}
+                          disabled={isLoadingPcapPage}
                           className={`min-w-[36px] h-9 px-2 rounded-lg border text-sm font-bold transition-all ${
                             currentPage === pageNum
                               ? "bg-blue-500/10 border-blue-500/20 text-blue-600 shadow-sm"
@@ -876,17 +869,12 @@ export default function PcapClientView({ setId, initialResponse, session }) {
                 <button
                   onClick={() =>
                     setCurrentPage((prev) =>
-                      Math.min(
-                        Math.ceil(sortedData.length / itemsPerPage),
-                        prev + 1,
-                      ),
+                      Math.min(totalPages, prev + 1),
                     )
                   }
-                  disabled={
-                    currentPage === Math.ceil(sortedData.length / itemsPerPage)
-                  }
+                  disabled={currentPage === totalPages || isLoadingPcapPage}
                   className={`p-2 rounded-lg border transition-all ${
-                    currentPage === Math.ceil(sortedData.length / itemsPerPage)
+                    currentPage === totalPages || isLoadingPcapPage
                       ? "text-slate-300 border-slate-100 cursor-not-allowed"
                       : "text-slate-600 border-slate-200 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50"
                   }`}
