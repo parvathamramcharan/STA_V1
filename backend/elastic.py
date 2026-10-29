@@ -446,7 +446,7 @@ def get_pcap_ids_for_sinkhole(sinkhole_id, es_client=None):
         return []
 
 
-def get_pcap_ip_docs(pcap_ids, es_client=None):
+def get_pcap_ip_docs(pcap_ids, es_client=None, source_fields=None):
     """Collect and normalize IP records from all documents for each PCAP."""
     if not pcap_ids:
         return {}
@@ -458,7 +458,7 @@ def get_pcap_ip_docs(pcap_ids, es_client=None):
         index=PCAP_IPS_INDEX,
         body={
             "query": {"terms": {"pcap_id": pcap_ids}},
-            "_source": ["pcap_id", "ips", "external_ips", "internal_ips"],
+            "_source": source_fields or ["pcap_id", "ips", "external_ips", "internal_ips"],
             "size": 1000,
         },
         scroll="2m",
@@ -473,6 +473,26 @@ def get_pcap_ip_docs(pcap_ids, es_client=None):
             if ip:
                 by_ip[ip] = record
 
+    def add_source(pcap_id, source):
+        target = documents.setdefault(
+            pcap_id,
+            {"pcap_id": pcap_id, "external_ips": {}, "internal_ips": {}},
+        )
+        if "ips" in source:
+            records = source.get("ips") or []
+            add_records(
+                target,
+                "external_ips",
+                [record for record in records if record.get("is_internal") is False],
+            )
+            add_records(
+                target,
+                "internal_ips",
+                [record for record in records if record.get("is_internal") is True],
+            )
+        add_records(target, "external_ips", source.get("external_ips"))
+        add_records(target, "internal_ips", source.get("internal_ips"))
+
     try:
         while True:
             hits = response.get("hits", {}).get("hits", [])
@@ -481,25 +501,7 @@ def get_pcap_ip_docs(pcap_ids, es_client=None):
             for hit in hits:
                 source = hit.get("_source", {})
                 pcap_id = source.get("pcap_id") or hit.get("_id")
-                target = documents.setdefault(
-                    pcap_id,
-                    {"pcap_id": pcap_id, "external_ips": {}, "internal_ips": {}},
-                )
-
-                if "ips" in source:
-                    records = source.get("ips") or []
-                    add_records(
-                        target,
-                        "external_ips",
-                        [record for record in records if record.get("is_internal") is False],
-                    )
-                    add_records(
-                        target,
-                        "internal_ips",
-                        [record for record in records if record.get("is_internal") is True],
-                    )
-                add_records(target, "external_ips", source.get("external_ips"))
-                add_records(target, "internal_ips", source.get("internal_ips"))
+                add_source(pcap_id, source)
 
             if not scroll_id:
                 break
@@ -509,31 +511,18 @@ def get_pcap_ip_docs(pcap_ids, es_client=None):
         if scroll_id:
             es.clear_scroll(scroll_id=scroll_id)
 
-    for pcap_id in pcap_ids:
-        if pcap_id not in documents:
-            try:
-                doc = es.get(index=PCAP_IPS_INDEX, id=pcap_id)
-            except NotFoundError:
+    missing_pcap_ids = [pcap_id for pcap_id in pcap_ids if pcap_id not in documents]
+    for offset in range(0, len(missing_pcap_ids), 500):
+        response = es.mget(
+            index=PCAP_IPS_INDEX,
+            ids=missing_pcap_ids[offset:offset + 500],
+            source_includes=source_fields,
+        )
+        for doc in response.get("docs", []):
+            if not doc.get("found"):
                 continue
-            source = doc.get("_source", {})
-            target = documents.setdefault(
-                pcap_id,
-                {"pcap_id": pcap_id, "external_ips": {}, "internal_ips": {}},
-            )
-            if "ips" in source:
-                records = source.get("ips") or []
-                add_records(
-                    target,
-                    "external_ips",
-                    [record for record in records if record.get("is_internal") is False],
-                )
-                add_records(
-                    target,
-                    "internal_ips",
-                    [record for record in records if record.get("is_internal") is True],
-                )
-            add_records(target, "external_ips", source.get("external_ips"))
-            add_records(target, "internal_ips", source.get("internal_ips"))
+            pcap_id = doc.get("_id")
+            add_source(pcap_id, doc.get("_source", {}))
 
     for document in documents.values():
         for field in ("external_ips", "internal_ips"):
@@ -545,7 +534,66 @@ def get_pcap_ip_docs(pcap_ids, es_client=None):
 
 
 
-def get_repository_stats(sinkhole_id=None):
+def count_observed_ips(pcap_ip_docs):
+    unique = set()
+    for source in (pcap_ip_docs or {}).values():
+        for entry in (source.get("external_ips") or []) + (source.get("internal_ips") or []):
+            ip = entry.get("ip")
+            if ip:
+                unique.add(ip)
+    return len(unique)
+
+
+def _count_observed_ips_in_es(es, pcap_ids):
+    if not pcap_ids:
+        return 0
+
+    response = es.search(
+        index=PCAP_IPS_INDEX,
+        body={
+            "query": {"terms": {"pcap_id": pcap_ids}},
+            "size": 0,
+            "aggs": {
+                "unique_ips": {
+                    "scripted_metric": {
+                        "init_script": "state.ips = new HashSet()",
+                        "map_script": """
+                            def source = params._source;
+                            if (source.ips != null) {
+                                for (def item : source.ips) {
+                                    if (item.ip != null) state.ips.add(item.ip.toString());
+                                }
+                            }
+                            for (def field : ['external_ips', 'internal_ips']) {
+                                if (source[field] != null) {
+                                    for (def item : source[field]) {
+                                        if (item.ip != null) state.ips.add(item.ip.toString());
+                                    }
+                                }
+                            }
+                        """,
+                        "combine_script": "return state.ips",
+                        "reduce_script": """
+                            def unique = new HashSet();
+                            for (def shard_ips : states) {
+                                if (shard_ips != null) unique.addAll(shard_ips);
+                            }
+                            return unique.size();
+                        """,
+                    }
+                }
+            },
+        },
+    )
+    return int(
+        response.get("aggregations", {})
+        .get("unique_ips", {})
+        .get("value", 0)
+        or 0
+    )
+
+
+def get_repository_stats(sinkhole_id=None, pcap_ip_docs=None, include_observed_ips=True):
     """Repository-wide stats, optionally scoped to a single sinkhole set.
 
     When sinkhole_id is None, stats cover the whole repository and observed_ips
@@ -564,52 +612,47 @@ def get_repository_stats(sinkhole_id=None):
 
     meta_query = {"match_all": {}} if sinkhole_id is None else {"term": {"sinkhole_id": sinkhole_id}}
 
-    try:
-        total_pcaps = int(es.count(index=PCAP_METADATA_INDEX, body={"query": meta_query}).get("count", 0))
-    except Exception:
-        total_pcaps = 0
-
     scoped_pcap_ids = []
     try:
         capture_agg = es.search(
             index=PCAP_METADATA_INDEX,
             body={
                 "query": meta_query,
-                "size": 10000 if sinkhole_id is not None else 0,
-                "_source": ["pcap_id"] if sinkhole_id is not None else False,
+                "size": 10000 if sinkhole_id is not None and include_observed_ips and pcap_ip_docs is None else 0,
+                "_source": ["pcap_id"] if sinkhole_id is not None and include_observed_ips and pcap_ip_docs is None else False,
+                "track_total_hits": True,
                 "aggs": {
                     "repository_size": {"sum": {"field": "total_bytes"}},
                     "traffic_volume": {"sum": {"field": "total_packets"}},
                 },
             },
         )
+        total_hits = capture_agg.get("hits", {}).get("total", 0)
+        total_pcaps = int(total_hits.get("value", 0) if isinstance(total_hits, dict) else total_hits)
         aggs = capture_agg.get("aggregations", {})
         repository_size = int(aggs.get("repository_size", {}).get("value", 0) or 0)
         traffic_volume = int(aggs.get("traffic_volume", {}).get("value", 0) or 0)
-        if sinkhole_id is not None:
+        if sinkhole_id is not None and pcap_ip_docs is None:
             scoped_pcap_ids = [
                 h["_source"].get("pcap_id")
                 for h in capture_agg.get("hits", {}).get("hits", [])
                 if h.get("_source", {}).get("pcap_id")
             ]
     except Exception:
+        total_pcaps = 0
         repository_size = 0
         traffic_volume = 0
 
     try:
-        if sinkhole_id is None:
+        if not include_observed_ips:
+            observed_ips = 0
+        elif sinkhole_id is None:
             observed_ips = int(es.count(index=IP_INTEL_INDEX, body={"query": {"match_all": {}}}).get("count", 0))
         else:
-            # Count distinct IPs across just this sinkhole's pcaps.
-            unique = set()
-            if scoped_pcap_ids:
-                ip_docs = get_pcap_ip_docs(scoped_pcap_ids, es)
-                for src in ip_docs.values():
-                    for entry in (src.get("external_ips") or []) + (src.get("internal_ips") or []):
-                        ip = entry.get("ip")
-                        if ip:
-                            unique.add(ip)
-            observed_ips = len(unique)
+            if pcap_ip_docs is None:
+                observed_ips = _count_observed_ips_in_es(es, scoped_pcap_ids)
+            else:
+                observed_ips = count_observed_ips(pcap_ip_docs)
     except Exception:
         observed_ips = 0
 

@@ -233,8 +233,6 @@ export default function DashboardClientView({ session }) {
 
         <div className="mx-6 mt-4 h-[clamp(500px,68vh,680px)] animate-pulse overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-slate-100 shadow-[0_20px_50px_rgba(71,85,105,0.14),0_2px_10px_rgba(71,85,105,0.06)]">
           <div className="flex h-full flex-col items-center justify-center gap-4 bg-gradient-to-br from-slate-100 via-slate-200/70 to-slate-100">
-            <div className="h-10 w-10 rounded-full bg-slate-300/70" />
-            <div className="h-3 w-40 rounded bg-slate-300/70" />
           </div>
         </div>
 

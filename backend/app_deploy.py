@@ -4,6 +4,7 @@ import json
 import uuid
 import urllib3
 import boto3
+from concurrent.futures import ThreadPoolExecutor
 from botocore.exceptions import ClientError
 from celery import Celery
 from collections import Counter, defaultdict
@@ -579,31 +580,44 @@ def get_insights(request: Request, current_user: dict = Depends(require_role('ad
                 }
             })
         sinkhole_id = elastic.GLOBAL_DASHBOARD_SINKHOLE_ID
-        global_stats = elastic.get_global_aggregation(sinkhole_id=sinkhole_id)
-        ip_breakdown = elastic.get_ip_breakdown(sinkhole_id=sinkhole_id)
-        infected_hosts = []
-        try:
-            ih_res = es.search(
-                index=elastic.PCAP_METADATA_INDEX,
-                body={
-                    "query": {"bool": {"filter": [{"term": {"sinkhole_id": sinkhole_id}}], "must_not": [{"terms": {"infected_host.keyword": ["Unknown", "N/A", "-", "None", "null", ""]}}]}},
-                    "_source": ["infected_host"],
-                    "size": 10000
-                }
+        def _get_infected_hosts():
+            try:
+                ih_res = es.search(
+                    index=elastic.PCAP_METADATA_INDEX,
+                    body={
+                        "query": {"bool": {"filter": [{"term": {"sinkhole_id": sinkhole_id}}], "must_not": [{"terms": {"infected_host.keyword": ["Unknown", "N/A", "-", "None", "null", ""]}}]}},
+                        "_source": ["infected_host"],
+                        "size": 10000
+                    }
+                )
+                return sorted({
+                    infected_host
+                    for hit in ih_res["hits"]["hits"]
+                    for infected_host in [hit["_source"].get("infected_host", "").strip()]
+                    if infected_host
+                    and infected_host.lower() not in ('unknown', 'n/a', '-', 'none', 'null', '')
+                    and '::' not in infected_host
+                    and not infected_host.startswith('231.')
+                    and not infected_host.startswith('224.')
+                    and not infected_host.startswith('239.')
+                })
+            except Exception:
+                return []
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            global_stats_future = executor.submit(
+                elastic.get_global_aggregation,
+                sinkhole_id=sinkhole_id,
             )
-            infected_hosts = sorted({
-                infected_host
-                for hit in ih_res["hits"]["hits"]
-                for infected_host in [hit["_source"].get("infected_host", "").strip()]
-                if infected_host
-                and infected_host.lower() not in ('unknown', 'n/a', '-', 'none', 'null', '')
-                and '::' not in infected_host
-                and not infected_host.startswith('231.')
-                and not infected_host.startswith('224.')
-                and not infected_host.startswith('239.')
-            })
-        except Exception:
-            pass
+            ip_breakdown_future = executor.submit(
+                elastic.get_ip_breakdown,
+                sinkhole_id=sinkhole_id,
+            )
+            infected_hosts_future = executor.submit(_get_infected_hosts)
+            global_stats = global_stats_future.result()
+            ip_breakdown = ip_breakdown_future.result()
+            infected_hosts = infected_hosts_future.result()
+
         return api_response(data={
             'insights_trends': {
                 'infected_hosts':     infected_hosts,
@@ -982,33 +996,160 @@ def get_pcaps(request: Request, current_user: dict = Depends(require_role('admin
             return api_response(data=[], success=False, error='Elasticsearch unavailable', status_code=503)
 
         search = _query_param(request, 'search', '', str).lower()
+        page = max(1, _query_param(request, 'page', 1, int))
+        return_all = _query_param(request, 'all', 0, int) == 1
+        per_page = 10000 if return_all else min(100, max(1, _query_param(request, 'per_page', 50, int)))
+        sort_by = _query_param(request, 'sort_by', 'random', str)
+        sort_order = _query_param(request, 'sort_order', 'desc', str).lower()
+        random_seed = _query_param(request, 'random_seed', 0, int)
+        date_from = _query_param(request, 'date_from', '', str)
+        date_to = _query_param(request, 'date_to', '', str)
+        if sort_by not in {"random", "size", "duration", "packets", "date", "external_ips"}:
+            sort_by = "random"
 
         filters = []
         if sinkhole_id is not None:
             filters.append({"term": {"sinkhole_id": sinkhole_id}})
         if search:
             filters.append({"wildcard": {"pcap_filename": {"value": f"*{search}*", "case_insensitive": True}}})
+        if date_from:
+            filters.append({
+                "bool": {
+                    "should": [
+                        {"bool": {"filter": [
+                            {"exists": {"field": "start_time_utc"}},
+                            {"range": {"start_time_utc": {"gte": date_from}}},
+                        ]}},
+                        {"bool": {"filter": [
+                            {"bool": {"must_not": [{"exists": {"field": "start_time_utc"}}]}},
+                            {"range": {"end_time_utc": {"gte": date_from}}},
+                        ]}},
+                    ],
+                    "minimum_should_match": 1,
+                }
+            })
+        if date_to:
+            end_of_day = f"{date_to}T23:59:59.999Z"
+            filters.append({
+                "bool": {
+                    "should": [
+                        {"bool": {"filter": [
+                            {"exists": {"field": "end_time_utc"}},
+                            {"range": {"end_time_utc": {"lte": end_of_day}}},
+                        ]}},
+                        {"bool": {"filter": [
+                            {"bool": {"must_not": [{"exists": {"field": "end_time_utc"}}]}},
+                            {"range": {"start_time_utc": {"lte": end_of_day}}},
+                        ]}},
+                    ],
+                    "minimum_should_match": 1,
+                }
+            })
 
         query = {"bool": {"filter": filters}} if filters else {"match_all": {}}
+        sort_fields = {
+            "size": "file_size",
+            "duration": "duration_seconds",
+            "packets": "total_packets",
+            "date": "start_time_utc",
+        }
+        sort_direction = sort_order if sort_order in {"asc", "desc"} else "desc"
+        if sort_by == "random":
+            query = {
+                "function_score": {
+                    "query": query,
+                    "random_score": {"seed": random_seed, "field": "_seq_no"},
+                }
+            }
+            sort = [{"_score": {"order": "desc"}}]
+        else:
+            sort = [{
+                sort_fields.get(sort_by, "analysis_timestamp"): {
+                    "order": sort_direction,
+                    "unmapped_type": "date" if sort_by == "date" else "long",
+                    "missing": "_last",
+                }
+            }]
 
+        external_ip_sort = sort_by == "external_ips"
         res = _es.search(
             index=elastic.PCAP_METADATA_INDEX,
             body={
                 "query": query,
                 "_source": ["pcap_id", "pcap_filename", "file_name", "file_size", "total_packets", "duration_seconds", "start_time_utc", "end_time_utc"],
-                "size": 10000,
-                "sort": [{"analysis_timestamp": {"order": "desc", "unmapped_type": "date"}}]
+                "from": 0 if external_ip_sort or return_all else (page - 1) * per_page,
+                "size": 10000 if external_ip_sort or return_all else per_page,
+                "track_total_hits": True,
+                "sort": sort,
             }
         )
 
         hits = res["hits"]["hits"]
-        pcap_ids = [h["_source"].get("pcap_id") for h in hits if h["_source"].get("pcap_id")]
+        total_value = res["hits"]["total"]
+        total = total_value["value"] if isinstance(total_value, dict) else total_value
+        matching_pcap_ids = [
+            hit.get("_source", {}).get("pcap_id")
+            for hit in hits
+            if hit.get("_source", {}).get("pcap_id")
+        ]
+        ip_source_fields = [
+            "pcap_id",
+            "ips.ip",
+            "ips.is_internal",
+            "external_ips.ip",
+            "internal_ips.ip",
+        ]
 
-        ip_docs = elastic.get_pcap_ip_docs(pcap_ids, _es)
-        ip_count_map = {
-            pcap_id: len(doc.get("external_ips") or [])
-            for pcap_id, doc in ip_docs.items()
-        }
+        if external_ip_sort:
+            ip_docs = elastic.get_pcap_ip_docs(
+                matching_pcap_ids,
+                _es,
+                source_fields=ip_source_fields,
+            )
+            ip_count_map = {
+                pcap_id: len(doc.get("external_ips") or [])
+                for pcap_id, doc in ip_docs.items()
+            }
+            hits.sort(
+                key=lambda hit: ip_count_map.get(hit.get("_source", {}).get("pcap_id"), 0),
+                reverse=sort_direction == "desc",
+            )
+            if not return_all:
+                offset = (page - 1) * per_page
+                hits = hits[offset:offset + per_page]
+            if search or date_from or date_to:
+                repository_stats = elastic.get_repository_stats(sinkhole_id=sinkhole_id)
+            else:
+                repository_stats = elastic.get_repository_stats(
+                    sinkhole_id=sinkhole_id,
+                    pcap_ip_docs=ip_docs,
+                )
+        else:
+            pcap_ids = [
+                hit.get("_source", {}).get("pcap_id")
+                for hit in hits
+                if hit.get("_source", {}).get("pcap_id")
+            ]
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                ip_docs_future = executor.submit(
+                    elastic.get_pcap_ip_docs,
+                    pcap_ids,
+                    _es,
+                    source_fields=ip_source_fields,
+                )
+                repository_stats_future = executor.submit(
+                    elastic.get_repository_stats,
+                    sinkhole_id=sinkhole_id,
+                    include_observed_ips=not (return_all and not search and not date_from and not date_to),
+                )
+                ip_docs = ip_docs_future.result()
+                repository_stats = repository_stats_future.result()
+            if return_all and not search and not date_from and not date_to:
+                repository_stats["observed_ips"] = elastic.count_observed_ips(ip_docs)
+            ip_count_map = {
+                pcap_id: len(doc.get("external_ips") or [])
+                for pcap_id, doc in ip_docs.items()
+            }
 
         all_pcaps = []
         for hit in hits:
@@ -1027,12 +1168,13 @@ def get_pcaps(request: Request, current_user: dict = Depends(require_role('admin
                 "end_time": src.get("end_time_utc"),
             })
 
-        total = res["hits"]["total"]["value"] if isinstance(res["hits"]["total"], dict) else res["hits"]["total"]
-
         return api_response(
             data=all_pcaps,
+            page=page,
+            per_page=per_page,
             total=total,
-            meta={"repository_stats": elastic.get_repository_stats(sinkhole_id=sinkhole_id)}
+            total_pages=(total + per_page - 1) // per_page,
+            meta={"repository_stats": repository_stats}
         )
     except Exception as e:
         print(f"Error in /api/pcaps: {e}")

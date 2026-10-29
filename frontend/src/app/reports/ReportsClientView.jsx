@@ -48,7 +48,11 @@ export default function ReportsClientView({ session }) {
       setError(null);
     }, 0);
     try {
-      const response = await fetchPcapSet(setId);
+      const response = await fetchPcapSet(setId, null, {
+        all: 1,
+        sort_by: "date",
+        sort_order: "desc",
+      });
       if (response.success) {
         setPcapFiles(response.data || []);
       } else {
